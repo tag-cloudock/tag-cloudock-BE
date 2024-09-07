@@ -18,11 +18,11 @@ import static org.springframework.http.HttpStatus.OK;
 public class UserController {
     private final UserService userService;
 
-    @PostMapping(value = "/login")
-    public ResponseDto<UserResponse> signin(@RequestBody UserRequest request) {
-        UserResponse response = userService.login(request);
-        return ResponseDto.of(OK.value(), SUCCESS_LOGIN.getMessage(), response);
-    }
+//    @PostMapping(value = "/login")
+//    public ResponseDto<UserResponse> signin(@RequestBody UserRequest request) {
+//        UserResponse response = userService.login(request);
+//        return ResponseDto.of(OK.value(), SUCCESS_LOGIN.getMessage(), response);
+//    }
 
     @GetMapping("/account")
     public ResponseDto<UserResponse> get(@RequestParam String id) throws Exception {

@@ -19,9 +19,6 @@ public class UserResponse {
     private String imgPath;
     private Role roles;
     private String token;
-    private boolean isCertification;
-    private Integer borrowCount;
-    private Integer lendCount;
 
 
     public UserResponse(User user) {
@@ -30,8 +27,5 @@ public class UserResponse {
         this.nickname = user.getNickName();
         this.imgPath = user.getImgPath();
         this.roles = user.getRole();
-        this.isCertification = user.isCertification();
-        this.borrowCount = user.getBorrowCount();
-        this.lendCount = user.getLendCount();
     }
 }

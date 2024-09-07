@@ -1,7 +1,7 @@
 package pagether.domain.image.exception;
 
+import pagether.domain.image.presentation.constant.ResponseMessage;
 import pagether.global.config.exception.ApplicationException;
-import pagether.domain.certification.presentation.constant.ResponseMessage;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 

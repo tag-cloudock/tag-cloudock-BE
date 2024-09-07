@@ -17,7 +17,7 @@ public class OAuthService {
 
     @Value("${kakao.rest-api-key}")
     private String REST_API_KEY;
-    private static final String REDIRECT_URI = "https://baram.today/oauth/kakao";
+    private static final String REDIRECT_URI = "http://127.0.0.1:3000/oauth/kakao";
 
     public String getKakaoAccessToken(String code) {
         String access_Token = "";

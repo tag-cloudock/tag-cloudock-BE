@@ -1,11 +1,7 @@
 package pagether.domain.user.domain;
 
-import pagether.domain.post.domain.Post;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity(name = "users")
 @Builder
@@ -34,26 +30,9 @@ public class User {
     @Column
     private String passWord;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
-    private List<Post> posts = new ArrayList<>();
+    @Column(nullable = false)
+    private Long lastSeenNewsId;
 
     @Enumerated(EnumType.STRING)
     private Role role;
-
-    @Column(nullable = false)
-    private boolean isCertification = false;
-
-    @Column(nullable = false)
-    private Integer borrowCount = 0;
-
-    @Column(nullable = false)
-    private Integer lendCount = 0;
-
-    public void setRoles(Role roles) {
-        this.role = role;
-    }
-
-    public void setCertification(Boolean isCertification) {
-        this.isCertification = isCertification;
-    }
 }

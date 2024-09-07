@@ -1,16 +1,13 @@
 package pagether.domain.user.application;
 
-import pagether.domain.certification.dto.req.UpdateUserCertifiRequest;
 import pagether.domain.image.application.ImageService;
 import pagether.domain.oauth.application.OAuthService;
 import pagether.domain.oauth.domain.KakaoUserInfo;
 import pagether.domain.user.domain.Role;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.dto.req.UpdateUserRequest;
-import pagether.domain.user.dto.req.UserRequest;
 import pagether.domain.user.dto.res.UserResponse;
 import pagether.domain.user.exception.DuplicateUserIdException;
-import pagether.domain.user.exception.IncorrectPasswordException;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
 import pagether.global.config.security.JwtProvider;
@@ -36,7 +33,6 @@ public class UserService {
 
     private static final String DEFAULT_IMAGE = "default.png";
     public static final long EXPIRATION_TIME = 60 * 60 * 1000L;
-
     private static final String EMAIL_KEYWORD = "E";
     private static final String PHONE_NUMBER_KEYWORD = "P";
 
@@ -89,9 +85,8 @@ public class UserService {
                 .phone(phoneNumber)
                 .nickName(nickname)
                 .imgPath(DEFAULT_IMAGE)
-                .borrowCount(0)
-                .lendCount(0)
                 .role(Role.USER)
+                .lastSeenNewsId(0L)
                 .build();
         userRepository.save(user);
         UserResponse signResponse = UserResponse.builder()
@@ -102,45 +97,6 @@ public class UserService {
                 .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
                 .build();
         return signResponse;
-    }
-
-
-    public UserResponse login(UserRequest request) {
-        if (!userRepository.existsUserByUserId(request.getUserid())) {
-            throw new UserNotFountException();
-        }
-        User user = userRepository.findByUserId(request.getUserid()).get();
-
-        if (!user.getPassWord().equals(request.getPassword())) {
-            throw new IncorrectPasswordException();
-        }
-        UserResponse signResponse = UserResponse.builder()
-                .id(user.getId())
-                .userId(user.getUserId())
-                .nickname(user.getNickName())
-                .roles(user.getRole())
-                .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
-                .build();
-        return signResponse;
-    }
-
-    public void register(UserRequest request, MultipartFile pic) {
-        if (userRepository.existsUserByUserId(request.getUserid())) {
-            throw new DuplicateUserIdException();
-        }
-        String imageFileName = imageService.save(pic, false);
-        String id = UUID.randomUUID().toString();
-        User user = User.builder()
-                .id(id)
-                .userId(request.getUserid())
-                .passWord(request.getPassword())
-                .nickName(request.getNickname())
-                .imgPath(imageFileName)
-                .borrowCount(0)
-                .lendCount(0)
-                .role(Role.MANAGER)
-                .build();
-        userRepository.save(user);
     }
 
     public UserResponse get(String id) {
@@ -171,12 +127,5 @@ public class UserService {
 
         return new UserResponse(updatedUser);
     }
-
-    public void updateCertification(String userId, UpdateUserCertifiRequest request) {
-        User user = userRepository.findByUserId(userId).orElseThrow(IllegalArgumentException::new);
-        user.setCertification(request.getIsCertification());
-        userRepository.save(user);
-    }
-
 
 }
