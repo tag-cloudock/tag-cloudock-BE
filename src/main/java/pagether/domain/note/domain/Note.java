@@ -1,9 +1,9 @@
-package pagether.domain.alert.domain;
+package pagether.domain.note.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import pagether.domain.note.domain.Note;
+import pagether.domain.book.domain.Book;
 import pagether.domain.user.domain.User;
 
 import java.time.LocalDateTime;
@@ -13,35 +13,34 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
-public class Alert {
-
+public class Note {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long alertId;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JsonIgnore
-    private User alarmSender;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JsonIgnore
-    private User alarmReceiver;
+    private Long noteId;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private AlertType alertType;
+    private String content;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
-    private Note note;
+    private Book book;
 
     @Column(nullable = false)
-    private Boolean isRead;
+    private NoteType type;
+
+    @Column(nullable = false)
+    private Long likeCount;
+
+    @Column(nullable = false)
+    private Boolean isPrivate;
+
+    @Column(nullable = false)
+    private Integer rating;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
-    }
 }

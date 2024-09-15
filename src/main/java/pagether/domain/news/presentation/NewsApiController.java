@@ -34,7 +34,7 @@ public class NewsApiController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseDto delete(@PathVariable Integer id) {
+    public ResponseDto delete(@PathVariable Long id) {
         newsService.delete(id);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_DELETE.getMessage());
     }

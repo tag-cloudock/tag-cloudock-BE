@@ -9,6 +9,6 @@ import java.util.List;
 
 @Repository
 @Transactional
-public interface NewsRepository extends JpaRepository<News, Integer> {
+public interface NewsRepository extends JpaRepository<News, Long> {
     List<News> findTop20ByOrderByCreatedAtDesc();
 }

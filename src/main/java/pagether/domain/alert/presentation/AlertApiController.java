@@ -28,7 +28,7 @@ public class AlertApiController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseDto delete(@PathVariable Integer id) {
+    public ResponseDto delete(@PathVariable Long id) {
         alertService.delete(id);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_DELETE.getMessage());
     }

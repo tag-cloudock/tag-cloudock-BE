@@ -9,6 +9,7 @@ import pagether.domain.alert.domain.Alert;
 import pagether.domain.alert.domain.AlertType;
 import pagether.domain.news.domain.News;
 import lombok.*;
+import pagether.domain.note.domain.Note;
 import pagether.domain.user.domain.User;
 
 import java.time.LocalDateTime;
@@ -23,7 +24,7 @@ public class AlertResponse {
     private User alarmSender;
     private User alarmReceiver;
     private AlertType alertType;
-    private Long note;
+    private Note note;
     private Boolean isRead;
     private LocalDateTime createdAt;
 

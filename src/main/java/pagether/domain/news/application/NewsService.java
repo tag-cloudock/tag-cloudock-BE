@@ -62,7 +62,7 @@ public class NewsService {
         userRepository.save(user);
     }
 
-    public void delete(Integer newsId) {
+    public void delete(Long newsId) {
         if (!newsRepository.existsById(newsId)) {
             throw new NewsNotFoundException();
         }

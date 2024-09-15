@@ -108,7 +108,7 @@ public class UserService {
     }
 
     public UserResponse updateNicknameAndPhoto(String userId, MultipartFile pic, UpdateUserRequest request) {
-        User user = userRepository.findByUserId(userId).orElseThrow(IllegalArgumentException::new);
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         if (pic != null) {
             String imageFileName = imageService.save(pic, false);
             user.setImgPath(imageFileName);

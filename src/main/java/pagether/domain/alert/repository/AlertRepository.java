@@ -11,7 +11,6 @@ import java.util.List;
 
 @Repository
 @Transactional
-public interface AlertRepository extends JpaRepository<Alert, Integer> {
-    List<Alert> findTop20ByOrderByCreatedAtDesc();
+public interface AlertRepository extends JpaRepository<Alert, Long> {
     List<Alert> findAllByAlarmReceiverOrderByCreatedAtDesc(User alarmReceiver);
 }

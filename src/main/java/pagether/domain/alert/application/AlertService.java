@@ -4,7 +4,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import pagether.domain.alert.domain.Alert;
 import pagether.domain.alert.domain.AlertType;
-import pagether.domain.alert.dto.req.AddAlertRequest;
 import pagether.domain.alert.dto.res.AlertResponse;
 import pagether.domain.alert.exception.AlertNotFoundException;
 import pagether.domain.alert.repository.AlertRepository;
@@ -12,6 +11,9 @@ import pagether.domain.alert.dto.res.SeparatedAlertResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pagether.domain.note.domain.Note;
+import pagether.domain.note.exception.NoteNotFountException;
+import pagether.domain.note.repository.NoteRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
@@ -29,8 +31,10 @@ public class AlertService {
 
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
+    private final NoteRepository noteRepository;
 
-    public AlertResponse save(User alarmSender, User alarmReceiver, AlertType alertType, Long note) {
+    public AlertResponse save(User alarmSender, User alarmReceiver, AlertType alertType, Long noteId) {
+        Note note = noteRepository.getNoteByNoteId(noteId).orElseThrow(NoteNotFountException::new);
         Alert alert = Alert.builder()
                 .alarmSender(alarmSender)
                 .alarmReceiver(alarmReceiver)
@@ -71,10 +75,10 @@ public class AlertService {
         });
     }
 
-    public void delete(Integer newsId) {
-        if (!alertRepository.existsById(newsId)) {
+    public void delete(Long alertId) {
+        if (!alertRepository.existsById(alertId)) {
             throw new AlertNotFoundException();
         }
-        alertRepository.deleteById(newsId);
+        alertRepository.deleteById(alertId);
     }
 }

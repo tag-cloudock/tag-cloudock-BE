@@ -1,4 +1,4 @@
-package pagether.domain.alert.domain;
+package pagether.domain.follow.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -13,35 +13,19 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
-public class Alert {
-
+public class Follow {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long alertId;
+    private Long followId;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
-    private User alarmSender;
+    private User follower;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
-    private User alarmReceiver;
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private AlertType alertType;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JsonIgnore
-    private Note note;
-
-    @Column(nullable = false)
-    private Boolean isRead;
+    private User followee;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
-
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
-    }
 }
