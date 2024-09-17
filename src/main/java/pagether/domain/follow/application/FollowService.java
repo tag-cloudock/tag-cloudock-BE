@@ -16,7 +16,14 @@ import pagether.domain.follow.dto.req.AddFollowRequest;
 import pagether.domain.follow.dto.res.FollowCountResponse;
 import pagether.domain.follow.dto.res.FollowListResponse;
 import pagether.domain.follow.dto.res.FollowResponse;
+import pagether.domain.follow.exception.AlreadyFollowedAndNotFollowedException;
+import pagether.domain.follow.exception.FollowNotFoundException;
 import pagether.domain.follow.repository.FollowRepository;
+import pagether.domain.heart.domain.Heart;
+import pagether.domain.heart.exception.AlreadyClickedAndNotClickedException;
+import pagether.domain.heart.exception.HeartNotFoundException;
+import pagether.domain.note.domain.Note;
+import pagether.domain.note.exception.NoteNotFountException;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
@@ -35,9 +42,12 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
 
-    public FollowResponse save(AddFollowRequest request, String followerId) {
+    public FollowResponse save(AddFollowRequest request, String userId) {
         User followee = userRepository.findByUserId(request.getFolloweeId()).orElseThrow(UserNotFountException::new);
-        User follower = userRepository.findByUserId(followerId).orElseThrow(UserNotFountException::new);
+        User follower = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        if (this.isFollowed(followee, follower)){
+            throw new AlreadyFollowedAndNotFollowedException();
+        }
         Follow follow = Follow.builder()
                 .followee(followee)
                 .follower(follower)
@@ -61,10 +71,17 @@ public class FollowService {
         return new FollowListResponse(followeeList, followerList);
     }
 
-    public void delete(Long followId) {
-        if (!followRepository.existsById(followId)) {
-            throw new AlertNotFoundException();
+    public Boolean isFollowed(User followee, User follower) {
+        return followRepository.existsByFolloweeAndFollower(followee, follower);
+    }
+
+    public void delete(String followeeId, String followerId) {
+        User followee = userRepository.findByUserId(followeeId).orElseThrow(UserNotFountException::new);
+        User follower = userRepository.findByUserId(followerId).orElseThrow(UserNotFountException::new);
+        if (!this.isFollowed(followee, follower)){
+            Follow follow = followRepository.findByFolloweeAndFollower(followee, follower).orElseThrow(FollowNotFoundException::new);
+            followRepository.deleteById(follow.getFollowId());
         }
-        followRepository.deleteById(followId);
+        throw new AlreadyFollowedAndNotFollowedException();
     }
 }

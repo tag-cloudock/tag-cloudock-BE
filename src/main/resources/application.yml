@@ -32,3 +32,6 @@ solapi:
   from-number: 01052395132
 kakao:
   rest-api-key: ddef038fa084012b787cdc2e0ac14a40
+
+aladin:
+  ttb-key:

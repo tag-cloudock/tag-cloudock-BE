@@ -1,4 +1,4 @@
-package pagether.domain.like.domain;
+package pagether.domain.heart.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
-public class heart {
+public class Heart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long heartId;
@@ -24,7 +24,7 @@ public class heart {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
-    private User reporter;
+    private User heartClicker;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

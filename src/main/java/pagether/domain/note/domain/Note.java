@@ -23,13 +23,17 @@ public class Note {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
+    private User user;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnore
     private Book book;
 
     @Column(nullable = false)
     private NoteType type;
 
     @Column(nullable = false)
-    private Long likeCount;
+    private Long heartCount;
 
     @Column(nullable = false)
     private Boolean isPrivate;
@@ -42,5 +46,13 @@ public class Note {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    public void incrementHeartCount() {
+        this.heartCount++;
+    }
+
+    public void decrementHeartCount() {
+        this.heartCount--;
+    }
 
 }

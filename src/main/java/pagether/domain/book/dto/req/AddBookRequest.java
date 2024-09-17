@@ -9,10 +9,12 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 @Builder
 public class AddBookRequest {
+    private String isbn;
     private String title;
     private String author;
     private String publisher;
     private Long pageCount;
+    private Long categoryId;
     private String description;
     private String coverImgName;
 }

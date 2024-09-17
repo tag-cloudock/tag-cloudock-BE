@@ -54,6 +54,9 @@ dependencies {
 
     // solapi
     implementation 'net.nurigo:sdk:4.2.7'
+
+    implementation 'org.json:json:20230918'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.14'
 }
 
 tasks.named('test') {

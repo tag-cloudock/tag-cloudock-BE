@@ -33,9 +33,9 @@ public class FollowApiController {
         FollowCountResponse response = followService.getCount(authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
-    @DeleteMapping("/{id}")
-    public ResponseDto delete(@PathVariable Long id) {
-        followService.delete(id);
+    @DeleteMapping("/{followeeId}")
+    public ResponseDto delete(@PathVariable String followeeId, Authentication authentication) {
+        followService.delete(followeeId, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_DELETE.getMessage());
     }
 }

@@ -11,6 +11,7 @@ public enum ResponseMessage {
     SUCCESS_UPDATE("수정에 성공했습니다."),
     SUCCESS_DELETE("삭제에 성공했습니다."),
     NOTE_NOT_FOUND("존재하지 않는 항목입니다."),
+    TYPE_NOT_FOUND("존재하지 않는 타입입니다."),
     ;
     private String message;
 }

@@ -7,6 +7,7 @@ import pagether.domain.note.application.NoteService;
 import pagether.domain.note.dto.req.AddNoteRequest;
 import pagether.domain.note.dto.res.NoteResponse;
 import pagether.global.config.dto.ResponseDto;
+import org.springframework.security.core.Authentication;
 
 import static org.springframework.http.HttpStatus.OK;
 
@@ -17,8 +18,8 @@ public class NoteApiController {
     private final NoteService noteService;
 
     @PostMapping
-    public ResponseDto<NoteResponse> save(@RequestBody AddNoteRequest request) {
-        NoteResponse response = noteService.save(request);
+    public ResponseDto<NoteResponse> save(@RequestBody AddNoteRequest request, Authentication authentication) {
+        NoteResponse response = noteService.save(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
 

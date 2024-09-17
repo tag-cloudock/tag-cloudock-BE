@@ -32,12 +32,15 @@ public class NoteService {
 
     private final BookRepository bookRepository;
     private final NoteRepository noteRepository;
+    private final UserRepository userRepository;
 
-    public NoteResponse save(AddNoteRequest request) {
-        Book book = bookRepository.findByBookId(request.getBookId()).orElseThrow(BookNotFoundException::new);
+    public NoteResponse save(AddNoteRequest request, String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        Book book = bookRepository.findByIsbn(request.getIsbn()).orElseThrow(BookNotFoundException::new);
         Note note = Note.builder()
+                .user(user)
                 .book(book)
-                .likeCount(0L)
+                .heartCount(0L)
                 .rating(0)
                 .isPrivate(request.getIsPrivate())
                 .type(request.getType())

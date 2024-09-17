@@ -8,12 +8,16 @@ import pagether.domain.follow.domain.Follow;
 import pagether.domain.user.domain.User;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @Transactional
 public interface FollowRepository extends JpaRepository<Follow, Long> {
     List<Follow>  findAllByFollower(User follower);
     List<Follow>  findAllByFollowee(User follower);
+    Optional<Follow> findByFolloweeAndFollower(User followee, User follower);
     Long countAllByFollower(User follower);
     Long countAllByFollowee(User follower);
+
+    Boolean existsByFolloweeAndFollower(User followee, User follower);
 }

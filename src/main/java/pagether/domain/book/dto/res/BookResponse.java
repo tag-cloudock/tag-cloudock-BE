@@ -15,12 +15,12 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class BookResponse {
-    private Long bookId;
+    private String bookId;
     private LocalDateTime createdAt;
 
     @Builder
     public BookResponse(Book book) {
-        bookId = book.getBookId();
+        bookId = book.getIsbn();
         createdAt = book.getCreatedAt();
     }
 }

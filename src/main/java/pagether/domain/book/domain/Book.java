@@ -1,8 +1,11 @@
 package pagether.domain.book.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import pagether.domain.category.domain.Category;
 import pagether.domain.note.domain.NoteType;
+import pagether.domain.user.domain.User;
 
 import java.time.LocalDateTime;
 
@@ -13,8 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Book {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long bookId;
+    private String isbn;
 
     @Column(nullable = false)
     private String title;
@@ -33,6 +35,10 @@ public class Book {
 
     @Column(nullable = false)
     private String coverImgName;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnore
+    private Category category;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

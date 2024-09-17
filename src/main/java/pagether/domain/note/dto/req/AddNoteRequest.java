@@ -9,7 +9,7 @@ import pagether.domain.note.domain.NoteType;
 @Jacksonized
 @Builder
 public class AddNoteRequest {
-    private Long bookId;
+    private String isbn;
     private NoteType type;
     private String content;
     private Boolean isPrivate;

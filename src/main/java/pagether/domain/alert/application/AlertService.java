@@ -34,7 +34,7 @@ public class AlertService {
     private final NoteRepository noteRepository;
 
     public AlertResponse save(User alarmSender, User alarmReceiver, AlertType alertType, Long noteId) {
-        Note note = noteRepository.getNoteByNoteId(noteId).orElseThrow(NoteNotFountException::new);
+        Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
         Alert alert = Alert.builder()
                 .alarmSender(alarmSender)
                 .alarmReceiver(alarmReceiver)
