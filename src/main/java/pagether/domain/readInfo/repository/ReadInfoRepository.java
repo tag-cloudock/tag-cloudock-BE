@@ -20,4 +20,7 @@ public interface ReadInfoRepository extends JpaRepository<ReadInfo, Long> {
     List<ReadInfo> findAllByBookAndUserOrderByStartDateDesc(Book book, User user);
 
     List<ReadInfo> findAllByUserAndReadStatus(User user, ReadStatus readStatus);
+
+    Optional<ReadInfo> findTopByBookAndUserOrderByCreatedAtDesc(Book book, User user);
+
 }

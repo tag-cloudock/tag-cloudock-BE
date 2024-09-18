@@ -6,7 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 import pagether.domain.book.domain.Book;
 import pagether.domain.book.exception.BookNotFoundException;
 import pagether.domain.book.repository.BookRepository;
+import pagether.domain.note.application.NoteService;
 import pagether.domain.note.domain.Note;
+import pagether.domain.note.domain.NoteType;
+import pagether.domain.note.dto.req.AddNoteRequest;
 import pagether.domain.note.exception.NoteNotFountException;
 import pagether.domain.note.repository.NoteRepository;
 import pagether.domain.readInfo.domain.ReadInfo;
@@ -39,28 +42,28 @@ public class ReadInfoService {
     private final UserRepository userRepository;
     private final ReadInfoRepository readInfoRepository;
     private final NoteRepository noteRepository;
+    private final NoteService noteService;
 
     public ReadInfoResponse startRead(AddReadInfoRequest request, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Book book = bookRepository.findByIsbn(request.getIsbn()).orElseThrow(BookNotFoundException::new);
-
+        ReadInfo readInfo;
         if (readInfoRepository.existsByBookAndUserAndReadStatus(book, user, ReadStatus.PINNED)){
-            ReadInfo readInfo = readInfoRepository.findByBookAndUserAndReadStatus(book, user, ReadStatus.PINNED).orElseThrow(ReadInfoNotFountException::new);
+            readInfo = readInfoRepository.findByBookAndUserAndReadStatus(book, user, ReadStatus.PINNED).orElseThrow(ReadInfoNotFountException::new);
             readInfo.start();
-            readInfoRepository.save(readInfo);
-            return new ReadInfoResponse(readInfo);
+        }else{
+            readInfo = ReadInfo.builder()
+                    .book(book)
+                    .user(user)
+                    .readCount(0L)
+                    .currentPage(0L)
+                    .readStatus(ReadStatus.READING)
+                    .hasReview(false)
+                    .startDate(LocalDateTime.now())
+                    .createdAt(LocalDateTime.now())
+                    .build();
         }
-
-        ReadInfo readInfo = ReadInfo.builder()
-                .book(book)
-                .user(user)
-                .readCount(0L)
-                .currentPage(0L)
-                .readStatus(ReadStatus.READING)
-                .hasReview(false)
-                .startDate(LocalDateTime.now())
-                .createdAt(LocalDateTime.now())
-                .build();
+        noteService.newBook(user, book);
         readInfo = readInfoRepository.save(readInfo);
         return new ReadInfoResponse(readInfo);
     }

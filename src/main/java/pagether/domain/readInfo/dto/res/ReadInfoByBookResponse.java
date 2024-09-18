@@ -21,6 +21,7 @@ public class ReadInfoByBookResponse {
     private String bookName;
     private String userName;
     private String userProfileImgName;
+    private Boolean hasReview;
     private ReadStatus currentStatus;
     private List<ReadInfoDTO> readInfos;
 
@@ -30,6 +31,7 @@ public class ReadInfoByBookResponse {
         this.currentPage = currentPage;
         this.currentStatus = currentStatus;
         this.readInfos = readInfos;
+        hasReview = lastReadInfo.getHasReview();
         bookName = lastReadInfo.getBook().getTitle();
         userName = lastReadInfo.getUser().getNickName();
         userProfileImgName = lastReadInfo.getUser().getImgPath();

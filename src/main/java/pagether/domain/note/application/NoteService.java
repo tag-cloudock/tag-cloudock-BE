@@ -19,7 +19,12 @@ import pagether.domain.note.dto.NoteDTO;
 import pagether.domain.note.dto.req.AddNoteRequest;
 import pagether.domain.note.dto.res.NoteResponse;
 import pagether.domain.note.exception.NoteNotFountException;
+import pagether.domain.note.exception.ReviewNotAllowedException;
 import pagether.domain.note.repository.NoteRepository;
+import pagether.domain.readInfo.domain.ReadInfo;
+import pagether.domain.readInfo.domain.ReadStatus;
+import pagether.domain.readInfo.exception.ReadInfoNotFountException;
+import pagether.domain.readInfo.repository.ReadInfoRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
@@ -38,10 +43,21 @@ public class NoteService {
     private final NoteRepository noteRepository;
     private final UserRepository userRepository;
     private final HeartRepository heartRepository;
+    private final ReadInfoRepository readInfoRepository;
 
     public NoteResponse save(AddNoteRequest request, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Book book = bookRepository.findByIsbn(request.getIsbn()).orElseThrow(BookNotFoundException::new);
+
+        if (request.getType().equals(NoteType.REVIEW)){
+            ReadInfo lastReadInfo = readInfoRepository.findTopByBookAndUserOrderByCreatedAtDesc(book, user).orElseThrow(ReadInfoNotFountException::new);
+            if (!(lastReadInfo.getReadStatus().equals(ReadStatus.READ) || lastReadInfo.getReadStatus().equals(ReadStatus.STOPPED))){
+                throw new ReviewNotAllowedException();
+            }
+            if (lastReadInfo.getHasReview()){
+                throw new ReviewNotAllowedException();
+            }
+        }
         Note note = Note.builder()
                 .user(user)
                 .book(book)
@@ -52,6 +68,24 @@ public class NoteService {
                 .hasSpoilerRisk(request.getHasSpoilerRisk())
                 .type(request.getType())
                 .content(request.getContent())
+                .updatedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
+                .build();
+        note = noteRepository.save(note);
+        return new NoteResponse(note);
+    }
+
+    public NoteResponse newBook(User user, Book book) {
+        Note note = Note.builder()
+                .user(user)
+                .book(book)
+                .heartCount(0L)
+                .rating(null)
+                .topic(null)
+                .isPrivate(false)
+                .hasSpoilerRisk(false)
+                .type(NoteType.NEW)
+                .content("")
                 .updatedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -110,6 +144,7 @@ public class NoteService {
                     .rating(note.getRating())
                     .isHeartClicked(isHeartClicked)
                     .heartCount(note.getHeartCount())
+                    .bookName(note.getBook().getTitle())
                     .type(note.getType())
                     .createdAt(LocalDateTime.now())
                     .build();

@@ -12,6 +12,7 @@ public enum ResponseMessage {
     SUCCESS_DELETE("삭제에 성공했습니다."),
     NOTE_NOT_FOUND("존재하지 않는 항목입니다."),
     TYPE_NOT_FOUND("존재하지 않는 타입입니다."),
+    REVIEW_NOT_ALLOWED("리뷰 작성이 허용 되지 않습니다."),
     ;
     private String message;
 }
