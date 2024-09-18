@@ -4,11 +4,14 @@ import pagether.domain.user.application.UserService;
 import pagether.domain.user.dto.req.UpdateUserRequest;
 import pagether.domain.user.dto.req.UserRequest;
 import pagether.domain.user.dto.res.UserResponse;
+import pagether.domain.user.dto.res.UserSearchResponse;
 import pagether.global.config.dto.ResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 import static pagether.domain.user.presentation.constant.ResponseMessage.*;
 import static org.springframework.http.HttpStatus.OK;
@@ -25,9 +28,15 @@ public class UserController {
 //    }
 
     @GetMapping("/account")
-    public ResponseDto<UserResponse> get(@RequestParam String id) throws Exception {
+    public ResponseDto<UserResponse> get(@RequestParam String id) {
         UserResponse response = userService.get(id);
         return ResponseDto.of(OK.value(), SUCCESS_READ.getMessage(), response);
+    }
+
+    @GetMapping("/search")
+    public ResponseDto<List<UserSearchResponse>> search(@RequestParam String keyword) {
+        List<UserSearchResponse> responses = userService.search(keyword);
+        return ResponseDto.of(OK.value(), SUCCESS_READ.getMessage(), responses);
     }
 
 //    @GetMapping("/admin")

@@ -1,6 +1,8 @@
 package pagether.domain.heart.application;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +13,7 @@ import pagether.domain.heart.exception.AlreadyClickedAndNotClickedException;
 import pagether.domain.heart.exception.HeartNotFoundException;
 import pagether.domain.heart.repository.HeartRepository;
 import pagether.domain.note.domain.Note;
+import pagether.domain.note.dto.NoteDTO;
 import pagether.domain.note.exception.NoteNotFountException;
 import pagether.domain.note.repository.NoteRepository;
 import pagether.domain.user.domain.User;
@@ -18,6 +21,8 @@ import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,8 +51,28 @@ public class HeartService {
         heart = heartRepository.save(heart);
         return new HeartResponse(heart);
     }
-    public Long getCountByNote(Note note) {
-        return heartRepository.countAllByNote(note);
+
+    public List<NoteDTO> get(String userId) {
+        List<NoteDTO> responses = new ArrayList<>();
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        Pageable pageable = PageRequest.of(0, 5);
+        List<Heart> hearts = heartRepository.findAllByHeartClickerOrderByCreatedAtDesc(user, pageable);
+
+        for(Heart heart : hearts){
+            Note note = heart.getNote();
+            NoteDTO dto = NoteDTO.builder()
+                    .userName(note.getUser().getNickName())
+                    .userProfileImgName(note.getUser().getImgPath())
+                    .noteId(note.getNoteId())
+                    .content(note.getContent())
+                    .rating(note.getRating())
+                    .isHeartClicked(true)
+                    .heartCount(note.getHeartCount())
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            responses.add(dto);
+        }
+        return responses;
     }
 
     public Boolean isClicked(Note note, String userId) {

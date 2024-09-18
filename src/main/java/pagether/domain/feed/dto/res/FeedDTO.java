@@ -23,10 +23,12 @@ public class FeedDTO {
     private LocalDateTime createdAt;
     private Long heartCount;
     private Boolean isHeartClicked;
+    private String isbn;
 
     @Builder
     public FeedDTO(Note note, Long heartCount, Boolean isHeartClicked) {
         id = note.getNoteId();
+        isbn = note.getBook().getIsbn();
         type = note.getType().toFeedType();
         userProfileImgName = note.getUser().getImgPath();
         userName = note.getUser().getNickName();

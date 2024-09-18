@@ -1,5 +1,7 @@
 package pagether.domain.user.application;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import pagether.domain.image.application.ImageService;
 import pagether.domain.oauth.application.OAuthService;
 import pagether.domain.oauth.domain.KakaoUserInfo;
@@ -7,6 +9,7 @@ import pagether.domain.user.domain.Role;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.dto.req.UpdateUserRequest;
 import pagether.domain.user.dto.res.UserResponse;
+import pagether.domain.user.dto.res.UserSearchResponse;
 import pagether.domain.user.exception.DuplicateUserIdException;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
@@ -17,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -87,6 +92,7 @@ public class UserService {
                 .imgPath(DEFAULT_IMAGE)
                 .role(Role.USER)
                 .lastSeenNewsId(0L)
+                .lastSeenAlertId(0L)
                 .build();
         userRepository.save(user);
         UserResponse signResponse = UserResponse.builder()
@@ -105,6 +111,17 @@ public class UserService {
         }
         User user = userRepository.findById(id).get();
         return new UserResponse(user);
+    }
+
+    public List<UserSearchResponse> search(String keyword) {
+        List<UserSearchResponse> responses = new ArrayList<>();
+        Pageable pageable = PageRequest.of(0, 5);
+        List<User> users = userRepository.findAllByNickNameContaining(keyword, pageable);
+        for(User user : users){
+            UserSearchResponse response = new UserSearchResponse(user);
+            responses.add(response);
+        }
+        return responses;
     }
 
     public UserResponse updateNicknameAndPhoto(String userId, MultipartFile pic, UpdateUserRequest request) {

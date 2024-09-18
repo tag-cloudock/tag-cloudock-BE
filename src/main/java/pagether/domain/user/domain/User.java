@@ -33,6 +33,9 @@ public class User {
     @Column(nullable = false)
     private Long lastSeenNewsId;
 
+    @Column(nullable = false)
+    private Long lastSeenAlertId;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 }

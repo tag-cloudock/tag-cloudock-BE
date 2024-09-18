@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import pagether.domain.book.domain.Book;
+import pagether.domain.readInfo.domain.ReadInfo;
 import pagether.domain.user.domain.User;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,10 @@ public class Note {
     @JsonIgnore
     private Book book;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnore
+    private ReadInfo readInfo;
+
     @Column(nullable = false)
     private NoteType type;
 
@@ -39,7 +44,11 @@ public class Note {
     private Boolean isPrivate;
 
     @Column(nullable = false)
-    private Integer rating;
+    private Boolean hasSpoilerRisk;
+
+    private String topic;
+
+    private Float rating;
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;

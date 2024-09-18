@@ -90,7 +90,7 @@ public class BookService {
             for (Map<String, Object> itemMap : items) {
                 String isbn = itemMap.get("isbn13").toString();
                 String title = itemMap.get("title").toString();
-                String bookCoverImgName = itemMap.get("cover").toString();
+                String bookCoverImgName = replaceCoverUrl(itemMap.get("cover").toString());
                 String author = itemMap.get("author").toString();
                 String publisher = itemMap.get("publisher").toString();
                 BookSearchResponse response = BookSearchResponse.builder()

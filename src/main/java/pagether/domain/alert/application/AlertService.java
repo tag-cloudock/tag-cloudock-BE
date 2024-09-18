@@ -11,6 +11,7 @@ import pagether.domain.alert.dto.res.SeparatedAlertResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pagether.domain.news.domain.News;
 import pagether.domain.note.domain.Note;
 import pagether.domain.note.exception.NoteNotFountException;
 import pagether.domain.note.repository.NoteRepository;
@@ -33,14 +34,13 @@ public class AlertService {
     private final UserRepository userRepository;
     private final NoteRepository noteRepository;
 
-    public AlertResponse save(User alarmSender, User alarmReceiver, AlertType alertType, Long noteId) {
+    public AlertResponse createAlert(User alarmSender, User alarmReceiver, AlertType alertType, Long noteId) {
         Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
         Alert alert = Alert.builder()
                 .alarmSender(alarmSender)
                 .alarmReceiver(alarmReceiver)
                 .alertType(alertType)
                 .note(note)
-                .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
         alert = alertRepository.save(alert);
@@ -48,31 +48,30 @@ public class AlertService {
     }
     public SeparatedAlertResponse getAllByUser(String userId) {
         User alarmReceiver = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        List<Alert> alerts = alertRepository.findAllByAlarmReceiverOrderByCreatedAtDesc(alarmReceiver);
+        LocalDateTime weeksAgo = LocalDateTime.now().minusWeeks(2);
+        List<Alert> alerts = alertRepository.findAllByAlarmReceiverAndCreatedAtAfterOrderByCreatedAtDesc(alarmReceiver, weeksAgo);
 
-        List<AlertResponse> AlertResponses = alerts.stream()
+        List<AlertResponse> alertResponses = alerts.stream()
                 .map(AlertResponse::new)
                 .toList();
 
-        List<AlertResponse> readNews = AlertResponses.stream()
-                .filter(AlertResponse::getIsRead)
-                .collect(Collectors.toList());
-        List<AlertResponse> unreadNews = AlertResponses.stream()
-                .filter(AlertResponse -> !AlertResponse.getIsRead())
+        Long lastSeenAlertId = alarmReceiver.getLastSeenAlertId();
+
+        List<AlertResponse> readNews = alertResponses.stream()
+                .filter(alertResponse -> alertResponse.getAlertId() <= lastSeenAlertId)
                 .collect(Collectors.toList());
 
-        markAllAsReadAsync(alerts);
+        List<AlertResponse> unreadNews = alertResponses.stream()
+                .filter(alertResponse -> alertResponse.getAlertId() > lastSeenAlertId)
+                .collect(Collectors.toList());
+        updateLastSeenAlertId(alarmReceiver, alerts);
         return new SeparatedAlertResponse(readNews, unreadNews);
     }
 
-    @Async
-    public CompletableFuture<Void> markAllAsReadAsync(List<Alert> alerts) {
-        return CompletableFuture.runAsync(() -> {
-            alerts.forEach(alert -> {
-                alert.setIsRead(true);
-                alertRepository.save(alert);
-            });
-        });
+    private void updateLastSeenAlertId(User user, List<Alert> alertDatas) {
+        Long latestNewsId = alertDatas.isEmpty() ? user.getLastSeenAlertId() : alertDatas.get(0).getAlertId();
+        user.setLastSeenNewsId(latestNewsId);
+        userRepository.save(user);
     }
 
     public void delete(Long alertId) {

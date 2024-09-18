@@ -36,12 +36,5 @@ public class Alert {
     private Note note;
 
     @Column(nullable = false)
-    private Boolean isRead;
-
-    @Column(nullable = false)
     private LocalDateTime createdAt;
-
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
-    }
 }

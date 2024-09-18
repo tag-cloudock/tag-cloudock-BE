@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class ReadInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long readId;
+    private Long readInfoId;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
@@ -30,13 +30,10 @@ public class ReadInfo {
     private Long readCount;
 
     @Column(nullable = false)
-    private Boolean isCompleted;
+    private ReadStatus readStatus;
 
     @Column(nullable = false)
     private Boolean hasReview;
-
-    @Column(nullable = false)
-    private Boolean toReadLater;
 
     @Column(nullable = false)
     private Long currentPage;
@@ -50,6 +47,12 @@ public class ReadInfo {
         this.currentPage = page;
     }
     public void start() {
-        this.toReadLater = false;
+        this.readStatus = ReadStatus.READING;
+    }
+    public void stop() {
+        this.readStatus = ReadStatus.STOPPED;
+    }
+    public void done() {
+        this.readStatus = ReadStatus.READ;
     }
 }

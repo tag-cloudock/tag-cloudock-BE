@@ -1,5 +1,6 @@
 package pagether.domain.heart.repository;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.util.Optional;
 public interface HeartRepository extends JpaRepository<Heart, Long> {
     Long countAllByNote(Note note);
     Boolean existsByNoteAndHeartClicker(Note note, User heartClicker);
-
     Optional<Heart> findByNoteAndHeartClicker(Note note, User heartClicker);
+
+    List<Heart> findAllByHeartClickerOrderByCreatedAtDesc(User user, Pageable pageable);
 }

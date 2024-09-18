@@ -7,7 +7,10 @@ import pagether.domain.heart.application.HeartService;
 import pagether.domain.heart.dto.req.AddHeartRequest;
 import pagether.domain.heart.dto.res.HeartResponse;
 import pagether.domain.heart.presentation.constant.ResponseMessage;
+import pagether.domain.note.dto.NoteDTO;
 import pagether.global.config.dto.ResponseDto;
+
+import java.util.List;
 
 import static org.springframework.http.HttpStatus.OK;
 
@@ -20,6 +23,12 @@ public class HeartApiController {
     public ResponseDto<HeartResponse> save(@RequestBody AddHeartRequest request, Authentication authentication) {
         HeartResponse response = heartService.save(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
+    }
+
+    @GetMapping
+    public ResponseDto<List<NoteDTO>> get(@RequestParam String userId) {
+        List<NoteDTO> response = heartService.get(userId);
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 
     @DeleteMapping("/{noteId}")

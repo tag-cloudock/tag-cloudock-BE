@@ -12,5 +12,8 @@ public class AddNoteRequest {
     private String isbn;
     private NoteType type;
     private String content;
+    private Float rating;
+    private String topic;
     private Boolean isPrivate;
+    private Boolean hasSpoilerRisk;
 }

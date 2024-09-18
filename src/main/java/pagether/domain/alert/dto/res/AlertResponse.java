@@ -25,7 +25,6 @@ public class AlertResponse {
     private User alarmReceiver;
     private AlertType alertType;
     private Note note;
-    private Boolean isRead;
     private LocalDateTime createdAt;
 
 
@@ -35,7 +34,6 @@ public class AlertResponse {
         alarmSender = alert.getAlarmSender();
         alarmReceiver = alert.getAlarmReceiver();
         note = alert.getNote();
-        isRead = alert.getIsRead();
         createdAt = alert.getCreatedAt();
     }
 }

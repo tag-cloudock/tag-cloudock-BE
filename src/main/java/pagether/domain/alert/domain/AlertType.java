@@ -1,7 +1,7 @@
 package pagether.domain.alert.domain;
 
 public enum AlertType {
-    LIKE,
+    HEART,
     FOLLOW,
     COMMENT
 }

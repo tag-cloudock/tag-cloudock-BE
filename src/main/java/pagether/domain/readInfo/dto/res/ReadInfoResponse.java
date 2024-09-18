@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class ReadInfoResponse {
-    private Long readId;
+    private Long readInfoId;
     private LocalDateTime createdAt;
 
     @Builder
     public ReadInfoResponse(ReadInfo readInfo) {
-        readId = readInfo.getReadId();
+        readInfoId = readInfo.getReadInfoId();
         createdAt = readInfo.getCreatedAt();
     }
 }
