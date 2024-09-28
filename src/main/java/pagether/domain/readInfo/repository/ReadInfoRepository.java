@@ -15,12 +15,20 @@ import java.util.Optional;
 @Transactional
 public interface ReadInfoRepository extends JpaRepository<ReadInfo, Long> {
     Boolean existsByBookAndUserAndReadStatus(Book book, User user, ReadStatus readStatus);
+    Boolean existsByBookAndUser(Book book, User user);
     Optional<ReadInfo> findByBookAndUserAndReadStatus(Book book, User user, ReadStatus readStatus);
 
     List<ReadInfo> findAllByBookAndUserOrderByStartDateDesc(Book book, User user);
 
     List<ReadInfo> findAllByUserAndReadStatus(User user, ReadStatus readStatus);
 
-    Optional<ReadInfo> findTopByBookAndUserOrderByCreatedAtDesc(Book book, User user);
+    Optional<ReadInfo> findByBookAndUserAndIsLatest(Book book, User user, Boolean isLatest);
+
+    List<ReadInfo> findAllByUserAndIsLatest(User user, Boolean isLatest);
+
+
+    List<ReadInfo> findAllByBookAndUserAndIsLatestAndReadStatusNotInOrderByCreatedAtDesc(Book book, User user, boolean isLatest, List<ReadStatus> excludedStatuses);
+
+
 
 }

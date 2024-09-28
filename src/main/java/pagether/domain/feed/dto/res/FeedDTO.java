@@ -16,6 +16,7 @@ public class FeedDTO {
     private Long id;
     private FeedType type;
     private String userProfileImgName;
+    private String userId;
     private String userName;
     private String bookCoverImgName;
     private String bookName;
@@ -28,6 +29,7 @@ public class FeedDTO {
     @Builder
     public FeedDTO(Note note, Long heartCount, Boolean isHeartClicked) {
         id = note.getNoteId();
+        userId = note.getUser().getUserId();
         isbn = note.getBook().getIsbn();
         type = note.getType().toFeedType();
         userProfileImgName = note.getUser().getImgPath();

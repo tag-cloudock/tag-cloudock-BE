@@ -1,5 +1,5 @@
 package pagether.domain.readInfo.domain;
 
 public enum ReadStatus {
-    NONE, PINNED, READING, STOPPED, READ;
+    PINNED, READING, STOPPED, READ, RE_PINNED;
 }

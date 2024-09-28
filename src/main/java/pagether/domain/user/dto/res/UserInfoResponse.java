@@ -4,24 +4,25 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import pagether.domain.user.domain.Role;
 import pagether.domain.user.domain.User;
 
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserSearchResponse {
+public class UserInfoResponse {
 
     private String id;
     private String userId;
     private String nickname;
     private String imgPath;
+    private String bio;
 
-    public UserSearchResponse(User user) {
+    public UserInfoResponse(User user) {
         this.id = user.getId();
         this.userId = user.getUserId();
         this.nickname = user.getNickName();
         this.imgPath = user.getImgPath();
+        this.bio = user.getBio();
     }
 }

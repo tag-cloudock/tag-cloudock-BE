@@ -63,6 +63,10 @@ public class BookService {
                 .coverImgName(request.getCoverImgName())
                 .category(category)
                 .description(request.getDescription())
+                .weight(request.getWeight())
+                .sizeWidth(request.getSizeWidth())
+                .sizeDepth(request.getSizeDepth())
+                .sizeHeight(request.getSizeHeight())
                 .createdAt(LocalDateTime.now())
                 .build();
         bookRepository.save(book);
@@ -74,7 +78,7 @@ public class BookService {
     }
 
     private String makeLookUpUrl(String isbn){
-        return "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey="+TTB_KEY+"&itemIdType=ISBN&ItemId="+isbn+"&output=js&Version=20131101";
+        return "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey="+TTB_KEY+"&itemIdType=ISBN&ItemId="+isbn+"&output=js&Version=20131101&OptResult=packing";
     }
 
     public List<BookSearchResponse> searchFromAladin(String keyword) {
@@ -83,7 +87,6 @@ public class BookService {
         HttpEntity<?> entity = new HttpEntity<>(new HttpHeaders());
         ResponseEntity<Map> resultMap = restTemplate.exchange(makeSearchUrl(keyword, 1L), HttpMethod.GET, entity, Map.class);
         Map<String, Object> body = resultMap.getBody();
-
         if (body != null) {
             List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("item");
 
@@ -91,8 +94,9 @@ public class BookService {
                 String isbn = itemMap.get("isbn13").toString();
                 String title = itemMap.get("title").toString();
                 String bookCoverImgName = replaceCoverUrl(itemMap.get("cover").toString());
-                String author = itemMap.get("author").toString();
+                String author = extractAuthors(itemMap.get("author").toString());
                 String publisher = itemMap.get("publisher").toString();
+
                 BookSearchResponse response = BookSearchResponse.builder()
                         .isbn(isbn)
                         .title(title)
@@ -106,7 +110,7 @@ public class BookService {
         return responses;
     }
 
-    public BookDetailResponse get(String isbn) {
+    public BookDetailResponse getBook(String isbn) {
         if (bookRepository.existsByIsbn(isbn)){
             Book book = bookRepository.findByIsbn(isbn).orElseThrow(BookNotFoundException::new);
             return new BookDetailResponse(book);
@@ -119,18 +123,25 @@ public class BookService {
         HttpEntity<?> entity = new HttpEntity<>(new HttpHeaders());
         ResponseEntity<Map> resultMap = restTemplate.exchange(makeLookUpUrl(isbn), HttpMethod.GET, entity, Map.class);
         Map<String, Object> body = resultMap.getBody();
-        System.out.println(body);
+        System.out.println(body.toString());
         if (body != null) {
             List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("item");
             Map<String, Object> item = items.get(0);
             String title = item.get("title").toString();
             String bookCoverImgName = replaceCoverUrl(item.get("cover").toString());
-            String author = item.get("author").toString();
+            String author = extractAuthors(item.get("author").toString());
             String publisher = item.get("publisher").toString();
             String description = item.get("description").toString();
             Long categoryId = Long.parseLong(item.get("categoryId").toString());
             Map<String, Object> subInfo = (Map<String, Object>) item.get("subInfo");
             Long itemPage = Long.parseLong(subInfo.get("itemPage").toString());
+            String subTitle = subInfo.get("subTitle").toString();
+            Map<String, Object> packing = (Map<String, Object>) subInfo.get("packing");
+            Integer weight = Integer.parseInt(packing.get("weight").toString());
+            Integer sizeDepth = Integer.parseInt(packing.get("sizeDepth").toString());
+            Integer sizeHeight = Integer.parseInt(packing.get("sizeHeight").toString());
+            Integer sizeWidth = Integer.parseInt(packing.get("sizeWidth").toString());
+            title = removeSubtitle2(title, subTitle);
 
             AddBookRequest request = AddBookRequest.builder()
                     .isbn(isbn)
@@ -141,6 +152,10 @@ public class BookService {
                     .categoryId(categoryId)
                     .description(description)
                     .coverImgName(bookCoverImgName)
+                    .weight(weight)
+                    .sizeDepth(sizeDepth)
+                    .sizeHeight(sizeHeight)
+                    .sizeWidth(sizeWidth)
                     .build();
             this.save(request);
 
@@ -161,5 +176,45 @@ public class BookService {
     public static String replaceCoverUrl(String original) {
         return original.replace("coversum", "cover500");
     }
+
+    public static String removeSubtitle(String original) {
+        int hyphenIndex = original.indexOf('-');
+        if (hyphenIndex != -1) {
+            return original.substring(0, hyphenIndex-1).trim();
+        }
+        return original;
+    }
+
+    public static String removeSubtitle2(String title, String subTitle) {
+        int titleLength = title.length();
+        int subTitleLength = subTitle.length();
+        if (subTitleLength == 0){
+            return title;
+        }
+        return title.substring(0, titleLength-subTitleLength-3).trim();
+    }
+
+    public static String extractAuthors(String original) {
+        String[] parts = original.split(",");
+        StringBuilder authors = new StringBuilder();
+
+        for (String part : parts) {
+            part = part.trim();
+
+            if (!part.contains("(")) {
+                authors.append(part).append(", ");
+            } else {
+                int bracketIndex = part.indexOf('(');
+                authors.append(part.substring(0, bracketIndex).trim()).append(", ");
+                break;
+            }
+        }
+        if (authors.length() > 0) {
+            authors.setLength(authors.length() - 2);
+        }
+
+        return authors.toString();
+    }
+
 
 }

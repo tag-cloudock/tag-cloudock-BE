@@ -14,6 +14,7 @@ public class AddNoteRequest {
     private String content;
     private Float rating;
     private String topic;
+    private String sentence;
     private Boolean isPrivate;
     private Boolean hasSpoilerRisk;
 }

@@ -40,6 +40,14 @@ public class Book {
     @JsonIgnore
     private Category category;
 
+    private Integer weight;
+
+    private Integer sizeDepth;
+
+    private Integer sizeHeight;
+
+    private Integer sizeWidth;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 }

@@ -17,6 +17,7 @@ import pagether.domain.follow.dto.res.FollowCountResponse;
 import pagether.domain.follow.dto.res.FollowListResponse;
 import pagether.domain.follow.dto.res.FollowResponse;
 import pagether.domain.follow.exception.AlreadyFollowedAndNotFollowedException;
+import pagether.domain.follow.exception.FollowNotAllowedException;
 import pagether.domain.follow.exception.FollowNotFoundException;
 import pagether.domain.follow.repository.FollowRepository;
 import pagether.domain.heart.domain.Heart;
@@ -43,6 +44,9 @@ public class FollowService {
     private final UserRepository userRepository;
 
     public FollowResponse save(AddFollowRequest request, String userId) {
+        if (request.getFolloweeId().equals(userId)){
+            throw new FollowNotAllowedException();
+        }
         User followee = userRepository.findByUserId(request.getFolloweeId()).orElseThrow(UserNotFountException::new);
         User follower = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         if (this.isFollowed(followee, follower)){

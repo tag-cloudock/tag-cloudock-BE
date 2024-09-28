@@ -8,8 +8,8 @@ import pagether.domain.oauth.domain.KakaoUserInfo;
 import pagether.domain.user.domain.Role;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.dto.req.UpdateUserRequest;
+import pagether.domain.user.dto.res.UserInfoResponse;
 import pagether.domain.user.dto.res.UserResponse;
-import pagether.domain.user.dto.res.UserSearchResponse;
 import pagether.domain.user.exception.DuplicateUserIdException;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
@@ -91,6 +91,7 @@ public class UserService {
                 .nickName(nickname)
                 .imgPath(DEFAULT_IMAGE)
                 .role(Role.USER)
+                .bio("")
                 .lastSeenNewsId(0L)
                 .lastSeenAlertId(0L)
                 .build();
@@ -105,20 +106,20 @@ public class UserService {
         return signResponse;
     }
 
-    public UserResponse get(String id) {
-        if (!userRepository.existsUserById(id)) {
+    public UserInfoResponse get(String userId) {
+        if (!userRepository.existsUserByUserId(userId)) {
             throw new UserNotFountException();
         }
-        User user = userRepository.findById(id).get();
-        return new UserResponse(user);
+        User user = userRepository.findByUserId(userId).get();
+        return new UserInfoResponse(user);
     }
 
-    public List<UserSearchResponse> search(String keyword) {
-        List<UserSearchResponse> responses = new ArrayList<>();
+    public List<UserInfoResponse> search(String keyword) {
+        List<UserInfoResponse> responses = new ArrayList<>();
         Pageable pageable = PageRequest.of(0, 5);
         List<User> users = userRepository.findAllByNickNameContaining(keyword, pageable);
         for(User user : users){
-            UserSearchResponse response = new UserSearchResponse(user);
+            UserInfoResponse response = new UserInfoResponse(user);
             responses.add(response);
         }
         return responses;

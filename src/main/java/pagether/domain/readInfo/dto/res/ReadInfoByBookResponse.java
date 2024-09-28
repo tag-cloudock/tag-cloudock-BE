@@ -12,7 +12,7 @@ import pagether.domain.readInfo.dto.ReadInfoDTO;
 import java.util.List;
 
 
-@NoArgsConstructor
+//@NoArgsConstructor
 @Getter
 @Setter
 public class ReadInfoByBookResponse {
@@ -38,7 +38,7 @@ public class ReadInfoByBookResponse {
     }
 
     @Builder
-    public ReadInfoByBookResponse(ReadStatus currentStatus) {
-        this.currentStatus = currentStatus;
+    public ReadInfoByBookResponse() {
+        this.currentStatus =  null;
     }
 }

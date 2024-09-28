@@ -6,6 +6,7 @@ import lombok.*;
 import pagether.domain.book.domain.Book;
 import pagether.domain.user.domain.User;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -43,6 +44,13 @@ public class ReadInfo {
     private LocalDateTime startDate;
     private LocalDateTime completionDate;
 
+    @Column(nullable = false)
+    private Boolean isLatest;
+
+
+    public void changeToOld() {
+        this.isLatest = false;
+    }
     public void setCurrentPage(Long page) {
         this.currentPage = page;
     }
@@ -51,8 +59,11 @@ public class ReadInfo {
     }
     public void stop() {
         this.readStatus = ReadStatus.STOPPED;
+        this.completionDate = LocalDateTime.now();
     }
     public void done() {
         this.readStatus = ReadStatus.READ;
+        this.currentPage = book.getPageCount();
+        this.completionDate = LocalDateTime.now();
     }
 }

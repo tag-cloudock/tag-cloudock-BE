@@ -19,6 +19,7 @@ public class BookDetailResponse {
     private String description;
     private Long pageCount;
 
+
     @Builder
     public BookDetailResponse(String isbn, String title, String bookCoverImgName, String author, String publisher, String description, Long pageCount) {
         this.title = title;

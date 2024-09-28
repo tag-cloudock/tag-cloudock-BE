@@ -27,9 +27,9 @@ public class BookApiController {
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), responses);
     }
 
-    @GetMapping("/look-up")
-    public ResponseDto<BookDetailResponse> lookUp(@RequestParam String isbn) {
-        BookDetailResponse response = bookService.lookUpFromAladin(isbn);
+    @GetMapping
+    public ResponseDto<BookDetailResponse> get(@RequestParam String isbn) {
+        BookDetailResponse response = bookService.getBook(isbn);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 

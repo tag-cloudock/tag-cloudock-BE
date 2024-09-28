@@ -48,9 +48,8 @@ public class NoteService {
     public NoteResponse save(AddNoteRequest request, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Book book = bookRepository.findByIsbn(request.getIsbn()).orElseThrow(BookNotFoundException::new);
-
+        ReadInfo lastReadInfo = readInfoRepository.findByBookAndUserAndIsLatest(book, user, true).orElseThrow(ReadInfoNotFountException::new);
         if (request.getType().equals(NoteType.REVIEW)){
-            ReadInfo lastReadInfo = readInfoRepository.findTopByBookAndUserOrderByCreatedAtDesc(book, user).orElseThrow(ReadInfoNotFountException::new);
             if (!(lastReadInfo.getReadStatus().equals(ReadStatus.READ) || lastReadInfo.getReadStatus().equals(ReadStatus.STOPPED))){
                 throw new ReviewNotAllowedException();
             }
@@ -62,8 +61,10 @@ public class NoteService {
                 .user(user)
                 .book(book)
                 .heartCount(0L)
+                .readInfo(lastReadInfo)
                 .rating(request.getType().equals(NoteType.REVIEW) ? request.getRating() : null)
                 .topic(request.getType().equals(NoteType.DISCUSSION) ? request.getTopic() : null)
+                .sentence(request.getType().equals(NoteType.SENTENCE) ? request.getSentence() : null)
                 .isPrivate(request.getIsPrivate())
                 .hasSpoilerRisk(request.getHasSpoilerRisk())
                 .type(request.getType())

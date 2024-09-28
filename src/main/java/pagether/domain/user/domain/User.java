@@ -21,6 +21,9 @@ public class User {
     @Column(nullable = false)
     private String nickName;
 
+    @Column(nullable = false)
+    private String bio;
+
     @Column
     private String phone;
 

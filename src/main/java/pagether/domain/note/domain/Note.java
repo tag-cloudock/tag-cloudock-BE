@@ -48,6 +48,8 @@ public class Note {
 
     private String topic;
 
+    private String sentence;
+
     private Float rating;
 
     @Column(nullable = false)
