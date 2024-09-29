@@ -17,6 +17,7 @@ public class UserInfoResponse {
     private String nickname;
     private String imgPath;
     private String bio;
+    private Boolean isAccountPrivate;
 
     public UserInfoResponse(User user) {
         this.id = user.getId();
@@ -24,5 +25,6 @@ public class UserInfoResponse {
         this.nickname = user.getNickName();
         this.imgPath = user.getImgPath();
         this.bio = user.getBio();
+        this.isAccountPrivate = user.getIsAccountPrivate();
     }
 }

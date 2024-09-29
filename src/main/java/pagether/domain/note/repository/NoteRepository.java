@@ -4,11 +4,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import pagether.domain.book.domain.Book;
-import pagether.domain.news.domain.News;
 import pagether.domain.note.domain.Note;
 import pagether.domain.note.domain.NoteType;
 import pagether.domain.readInfo.domain.ReadInfo;
 import pagether.domain.user.domain.User;
+
 
 import java.time.LocalDateTime;
 import java.util.List;

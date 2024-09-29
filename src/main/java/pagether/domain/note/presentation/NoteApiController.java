@@ -6,6 +6,8 @@ import pagether.domain.news.presentation.constant.ResponseMessage;
 import pagether.domain.note.application.NoteService;
 import pagether.domain.note.dto.NoteDTO;
 import pagether.domain.note.dto.req.AddNoteRequest;
+import pagether.domain.note.dto.req.UpdateNoteRequest;
+import pagether.domain.note.dto.res.NoteContentResponse;
 import pagether.domain.note.dto.res.NoteResponse;
 import pagether.global.config.dto.ResponseDto;
 import org.springframework.security.core.Authentication;
@@ -26,6 +28,18 @@ public class NoteApiController {
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseDto<NoteContentResponse> get(@PathVariable Long id, Authentication authentication) {
+        NoteContentResponse response = noteService.get(id, authentication.getName());
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseDto update(@RequestBody UpdateNoteRequest request, @PathVariable Long id, Authentication authentication) {
+        noteService.update(request, id, authentication.getName());
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_UPDATE.getMessage());
+    }
+
     @GetMapping("/by-user")
     public ResponseDto<List<NoteDTO>> getNotesByUser(@RequestParam String type, @RequestParam String userId, Authentication authentication) {
         List<NoteDTO> response = noteService.getNotesByUser(type, userId, authentication.getName());
@@ -39,8 +53,8 @@ public class NoteApiController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseDto delete(@PathVariable Long id) {
-        noteService.delete(id);
+    public ResponseDto delete(@PathVariable Long id, Authentication authentication) {
+        noteService.delete(id, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_DELETE.getMessage());
     }
 }

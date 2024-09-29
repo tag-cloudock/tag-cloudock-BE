@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pagether.domain.alert.application.AlertService;
+import pagether.domain.alert.domain.AlertType;
 import pagether.domain.heart.domain.Heart;
 import pagether.domain.heart.dto.req.AddHeartRequest;
 import pagether.domain.heart.dto.res.HeartResponse;
@@ -33,6 +35,7 @@ public class HeartService {
     private final HeartRepository heartRepository;
     private final UserRepository userRepository;
     private final NoteRepository noteRepository;
+    private final AlertService alertService;
 
     public HeartResponse save(AddHeartRequest request, String userId) {
         User heartClicker = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
@@ -45,10 +48,10 @@ public class HeartService {
                 .note(note)
                 .createdAt(LocalDateTime.now())
                 .build();
-
         note.incrementHeartCount();
         noteRepository.save(note);
         heart = heartRepository.save(heart);
+        alertService.createAlert(heartClicker, note.getUser(), AlertType.HEART, note);
         return new HeartResponse(heart);
     }
 

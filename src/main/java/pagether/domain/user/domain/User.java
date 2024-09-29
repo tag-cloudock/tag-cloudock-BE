@@ -24,6 +24,9 @@ public class User {
     @Column(nullable = false)
     private String bio;
 
+    @Column(nullable = false)
+    private Boolean isAccountPrivate;
+
     @Column
     private String phone;
 

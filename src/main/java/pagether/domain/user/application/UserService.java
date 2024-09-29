@@ -92,6 +92,7 @@ public class UserService {
                 .imgPath(DEFAULT_IMAGE)
                 .role(Role.USER)
                 .bio("")
+                .isAccountPrivate(false)
                 .lastSeenNewsId(0L)
                 .lastSeenAlertId(0L)
                 .build();

@@ -3,6 +3,8 @@ package pagether.domain.alert.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import pagether.domain.follow.domain.Follow;
+import pagether.domain.follow.domain.RequestStatus;
 import pagether.domain.note.domain.Note;
 import pagether.domain.user.domain.User;
 
@@ -31,9 +33,15 @@ public class Alert {
     @Enumerated(EnumType.STRING)
     private AlertType alertType;
 
+    private RequestStatus requestStatus;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
     private Note note;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnore
+    private Follow follow;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

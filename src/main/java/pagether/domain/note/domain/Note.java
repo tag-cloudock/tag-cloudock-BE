@@ -58,6 +58,36 @@ public class Note {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setRating(Float rating) {
+        this.rating = rating;
+    }
+
+    public void setSentence(String sentence) {
+        this.sentence = sentence;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
+    }
+
+    public void setIsPrivate(Boolean isPrivate) {
+        this.isPrivate = isPrivate;
+    }
+
+    public void setHasSpoilerRisk(Boolean hasSpoilerRisk) {
+        this.hasSpoilerRisk = hasSpoilerRisk;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+
     public void incrementHeartCount() {
         this.heartCount++;
     }

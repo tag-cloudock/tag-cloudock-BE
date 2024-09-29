@@ -17,6 +17,8 @@ import pagether.domain.note.domain.Note;
 import pagether.domain.note.domain.NoteType;
 import pagether.domain.note.dto.NoteDTO;
 import pagether.domain.note.dto.req.AddNoteRequest;
+import pagether.domain.note.dto.req.UpdateNoteRequest;
+import pagether.domain.note.dto.res.NoteContentResponse;
 import pagether.domain.note.dto.res.NoteResponse;
 import pagether.domain.note.exception.NoteNotFountException;
 import pagether.domain.note.exception.ReviewNotAllowedException;
@@ -28,6 +30,7 @@ import pagether.domain.readInfo.repository.ReadInfoRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.UnauthorizedAccessException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -74,6 +77,28 @@ public class NoteService {
                 .build();
         note = noteRepository.save(note);
         return new NoteResponse(note);
+    }
+    public void update(UpdateNoteRequest request, Long noteId, String userId) {
+        Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
+        if (!note.getUser().getUserId().equals(userId)) {
+            throw new UnauthorizedAccessException();
+        }
+        note.setContent(request.getContent());
+        note.setRating(request.getRating());
+        note.setTopic(request.getTopic());
+        note.setSentence(request.getSentence());
+        note.setIsPrivate(request.getIsPrivate());
+        note.setHasSpoilerRisk(request.getHasSpoilerRisk());
+        note.setUpdatedAt(LocalDateTime.now());
+        noteRepository.save(note);
+    }
+
+    public NoteContentResponse get(Long noteId, String userId) {
+        Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
+        if (note.getUser().getUserId().equals(userId)){
+            return new NoteContentResponse(note);
+        }
+        throw new UnauthorizedAccessException();
     }
 
     public NoteResponse newBook(User user, Book book) {
@@ -129,6 +154,7 @@ public class NoteService {
 
     public List<NoteDTO> getNotesByBook(String type, String isbn, String userId) {
         List<NoteDTO> responses = new ArrayList<>();
+
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Book book = bookRepository.findByIsbn(isbn).orElseThrow(BookNotFoundException::new);
         NoteType noteType = NoteType.fromString(type);
@@ -154,9 +180,13 @@ public class NoteService {
         return responses;
     }
 
-    public void delete(Long noteId) {
+    public void delete(Long noteId, String userId) {
+        Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
         if (!noteRepository.existsById(noteId)) {
             throw new NoteNotFountException();
+        }
+        if (!note.getUser().getUserId().equals(userId)) {
+            throw new UnauthorizedAccessException();
         }
         noteRepository.deleteById(noteId);
     }

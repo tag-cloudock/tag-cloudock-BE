@@ -10,6 +10,7 @@ import pagether.domain.book.exception.BookNotFoundException;
 import pagether.domain.book.repository.BookRepository;
 import pagether.domain.feed.dto.res.FeedDTO;
 import pagether.domain.follow.domain.Follow;
+import pagether.domain.follow.domain.RequestStatus;
 import pagether.domain.follow.repository.FollowRepository;
 import pagether.domain.heart.repository.HeartRepository;
 import pagether.domain.note.domain.Note;
@@ -36,7 +37,7 @@ public class FeedService {
         List<FeedDTO> feeds = new ArrayList<>();
 
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        List<Follow> followedUsers = followRepository.findAllByFollower(user);
+        List<Follow> followedUsers = followRepository.findAllByFollowerAndRequestStatus(user, RequestStatus.ACCEPTED);
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime afterDate = now.minusWeeks(4);

@@ -1,15 +1,9 @@
 package pagether.domain.alert.dto.res;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Column;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import lombok.*;
 import pagether.domain.alert.domain.Alert;
 import pagether.domain.alert.domain.AlertType;
-import pagether.domain.news.domain.News;
-import lombok.*;
-import pagether.domain.note.domain.Note;
+import pagether.domain.follow.domain.RequestStatus;
 import pagether.domain.user.domain.User;
 
 import java.time.LocalDateTime;
@@ -19,19 +13,21 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
-public class AlertResponse {
+public class RequestAlertResponse {
     private Long alertId;
     private User alarmSender;
+    private User alarmReceiver;
+    private RequestStatus requestStatus;
     private AlertType alertType;
-    private Note note;
     private LocalDateTime createdAt;
 
 
     @Builder
-    public AlertResponse(Alert alert) {
+    public RequestAlertResponse(Alert alert) {
         alertId = alert.getAlertId();
+        requestStatus = alert.getFollow().getRequestStatus();
         alarmSender = alert.getAlarmSender();
-        note = alert.getNote();
+        alertType = AlertType.FOLLOW_REQUEST;
         createdAt = alert.getCreatedAt();
     }
 }

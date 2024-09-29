@@ -1,9 +1,7 @@
-package pagether.domain.readInfo.exception;
-
-import pagether.global.config.exception.ApplicationException;
+package pagether.global.config.exception;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static pagether.domain.readInfo.presentation.constant.ResponseMessage.UNAUTHORIZED_ACCESS;
+import static pagether.global.config.exception.constant.ResponseMessage.UNAUTHORIZED_ACCESS;
 
 public class UnauthorizedAccessException extends ApplicationException {
     public UnauthorizedAccessException() {

@@ -9,11 +9,13 @@ import java.util.List;
 @Getter
 @Setter
 public class SeparatedAlertResponse {
+    private List<RequestAlertResponse> requestAlerts;
     private List<AlertResponse> seenAlerts;
     private List<AlertResponse> unseenAlerts;
 
     @Builder
-    public SeparatedAlertResponse(List<AlertResponse> readNews, List<AlertResponse> unreadNews) {
+    public SeparatedAlertResponse(List<RequestAlertResponse> requestAlerts, List<AlertResponse> readNews, List<AlertResponse> unreadNews) {
+        this.requestAlerts = requestAlerts;
         this.seenAlerts = readNews;
         this.unseenAlerts = unreadNews;
     }

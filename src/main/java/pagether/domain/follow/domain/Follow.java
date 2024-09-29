@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import pagether.domain.note.domain.Note;
+import pagether.domain.readInfo.domain.ReadStatus;
 import pagether.domain.user.domain.User;
 
 import java.time.LocalDateTime;
@@ -27,5 +28,12 @@ public class Follow {
     private User followee;
 
     @Column(nullable = false)
+    private RequestStatus requestStatus;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    public void accept() {
+        this.requestStatus = RequestStatus.ACCEPTED;
+    }
 }

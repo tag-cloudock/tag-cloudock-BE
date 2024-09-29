@@ -7,11 +7,10 @@ import pagether.domain.book.domain.Book;
 import pagether.domain.book.exception.BookNotFoundException;
 import pagether.domain.book.repository.BookRepository;
 import pagether.domain.follow.domain.Follow;
+import pagether.domain.follow.domain.RequestStatus;
 import pagether.domain.follow.repository.FollowRepository;
 import pagether.domain.note.application.NoteService;
 import pagether.domain.note.domain.Note;
-import pagether.domain.note.domain.NoteType;
-import pagether.domain.note.dto.req.AddNoteRequest;
 import pagether.domain.note.exception.NoteNotFountException;
 import pagether.domain.note.repository.NoteRepository;
 import pagether.domain.readInfo.domain.ReadInfo;
@@ -27,17 +26,16 @@ import pagether.domain.readInfo.dto.res.ReadInfoResponse;
 import pagether.domain.readInfo.dto.res.ReadingAndPinedBooksResponse;
 import pagether.domain.readInfo.dto.res.ReadingAndReadBooksResponse;
 import pagether.domain.readInfo.exception.ReadInfoNotFountException;
-import pagether.domain.readInfo.exception.UnauthorizedAccessException;
 import pagether.domain.readInfo.repository.ReadInfoRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.UnauthorizedAccessException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -188,7 +186,7 @@ public class ReadInfoService {
         List<ReadFriendInfoDTO> dtos = new ArrayList<>();
         Book book = bookRepository.findByIsbn(isbn).orElseThrow(BookNotFoundException::new);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        List<Follow> follows = followRepository.findAllByFollower(user);
+        List<Follow> follows = followRepository.findAllByFollowerAndRequestStatus(user, RequestStatus.ACCEPTED);
 
         for(Follow follow : follows){
             User followee = userRepository.findByUserId(follow.getFollowee().getUserId()).orElseThrow(UserNotFountException::new);
