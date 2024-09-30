@@ -16,5 +16,6 @@ public class AddNoteRequest {
     private String topic;
     private String sentence;
     private Boolean isPrivate;
+    private Long discussionId;
     private Boolean hasSpoilerRisk;
 }

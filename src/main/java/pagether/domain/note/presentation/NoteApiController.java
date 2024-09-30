@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pagether.domain.news.presentation.constant.ResponseMessage;
 import pagether.domain.note.application.NoteService;
+import pagether.domain.note.dto.CommentDTO;
 import pagether.domain.note.dto.NoteDTO;
 import pagether.domain.note.dto.req.AddNoteRequest;
 import pagether.domain.note.dto.req.UpdateNoteRequest;
@@ -32,6 +33,12 @@ public class NoteApiController {
     public ResponseDto<NoteContentResponse> get(@PathVariable Long id, Authentication authentication) {
         NoteContentResponse response = noteService.get(id, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
+    }
+
+    @GetMapping("/{discussionId}")
+    public ResponseDto<List<CommentDTO>> getComment(@PathVariable Long discussionId, Authentication authentication) {
+        List<CommentDTO> responses = noteService.getComment(discussionId, authentication.getName());
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), responses);
     }
 
     @PutMapping("/{id}")

@@ -52,6 +52,10 @@ public class Note {
 
     private Float rating;
 
+    @OneToOne(fetch = FetchType.EAGER)
+    @JsonIgnore
+    private Note discussion;
+
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 

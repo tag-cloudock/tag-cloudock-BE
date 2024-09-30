@@ -17,11 +17,12 @@ public class NoteContentResponse {
     private String sentence;
     private String content;
     private Boolean isPrivate;
+    private Boolean isHeartClicked;
     private Boolean hasSpoilerRisk;
     private LocalDateTime createdAt;
 
     @Builder
-    public NoteContentResponse(Note note) {
+    public NoteContentResponse(Note note, Boolean isHeartClicked) {
         noteId = note.getNoteId();
         rating = note.getRating();
         topic = note.getTopic();
@@ -30,5 +31,6 @@ public class NoteContentResponse {
         isPrivate = note.getIsPrivate();
         hasSpoilerRisk = note.getHasSpoilerRisk();
         createdAt = note.getCreatedAt();
+        this.isHeartClicked = isHeartClicked;
     }
 }

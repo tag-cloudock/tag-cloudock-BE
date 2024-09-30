@@ -3,6 +3,8 @@ package pagether.domain.note.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pagether.domain.alert.application.AlertService;
+import pagether.domain.alert.domain.AlertType;
 import pagether.domain.book.domain.Book;
 import pagether.domain.book.exception.BookNotFoundException;
 import pagether.domain.book.repository.BookRepository;
@@ -15,6 +17,7 @@ import pagether.domain.news.exception.NewsNotFoundException;
 import pagether.domain.news.repository.NewsRepository;
 import pagether.domain.note.domain.Note;
 import pagether.domain.note.domain.NoteType;
+import pagether.domain.note.dto.CommentDTO;
 import pagether.domain.note.dto.NoteDTO;
 import pagether.domain.note.dto.req.AddNoteRequest;
 import pagether.domain.note.dto.req.UpdateNoteRequest;
@@ -47,6 +50,7 @@ public class NoteService {
     private final UserRepository userRepository;
     private final HeartRepository heartRepository;
     private final ReadInfoRepository readInfoRepository;
+    private final AlertService alertService;
 
     public NoteResponse save(AddNoteRequest request, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
@@ -60,11 +64,16 @@ public class NoteService {
                 throw new ReviewNotAllowedException();
             }
         }
+        Note discussion = null;
+        if (request.getType().equals(NoteType.COMMENT)){
+            discussion = noteRepository.findById(request.getDiscussionId()).orElseThrow(NoteNotFountException::new);
+        }
         Note note = Note.builder()
                 .user(user)
                 .book(book)
                 .heartCount(0L)
                 .readInfo(lastReadInfo)
+                .discussion(request.getType().equals(NoteType.COMMENT) ? discussion : null)
                 .rating(request.getType().equals(NoteType.REVIEW) ? request.getRating() : null)
                 .topic(request.getType().equals(NoteType.DISCUSSION) ? request.getTopic() : null)
                 .sentence(request.getType().equals(NoteType.SENTENCE) ? request.getSentence() : null)
@@ -76,6 +85,9 @@ public class NoteService {
                 .createdAt(LocalDateTime.now())
                 .build();
         note = noteRepository.save(note);
+        if (request.getType().equals(NoteType.COMMENT)){
+            alertService.createAlert(user, discussion.getUser(), AlertType.COMMENT, discussion);
+        }
         return new NoteResponse(note);
     }
     public void update(UpdateNoteRequest request, Long noteId, String userId) {
@@ -94,11 +106,36 @@ public class NoteService {
     }
 
     public NoteContentResponse get(Long noteId, String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
         if (note.getUser().getUserId().equals(userId)){
-            return new NoteContentResponse(note);
+            Boolean isHeartClicked = heartRepository.existsByNoteAndHeartClicker(note, user);
+            return new NoteContentResponse(note, isHeartClicked);
         }
         throw new UnauthorizedAccessException();
+    }
+
+    public List<CommentDTO> getComment(Long discussionId, String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        Note discussion = noteRepository.findById(discussionId).orElseThrow(NoteNotFountException::new);
+        List<Note> comment = noteRepository.findAllByDiscussion(discussion);
+        List<CommentDTO> dtos = new ArrayList<>();
+
+        for (Note note : comment){
+            Boolean isHeartClicked = heartRepository.existsByNoteAndHeartClicker(note, user);
+            CommentDTO dto = CommentDTO.builder()
+                    .userName(note.getUser().getNickName())
+                    .userProfileImgName(note.getUser().getImgPath())
+                    .noteId(note.getNoteId())
+                    .content(note.getContent())
+                    .isHeartClicked(isHeartClicked)
+                    .heartCount(note.getHeartCount())
+                    .type(note.getType())
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            dtos.add(dto);
+        }
+        return dtos;
     }
 
     public NoteResponse newBook(User user, Book book) {
@@ -139,6 +176,8 @@ public class NoteService {
                     .hasSpoilerRisk(note.getHasSpoilerRisk())
                     .content(note.getContent())
                     .rating(note.getRating())
+                    .sentence(note.getSentence())
+                    .topic(note.getTopic())
                     .isPrivate(note.getIsPrivate())
                     .isHeartClicked(isHeartClicked)
                     .heartCount(note.getHeartCount())
@@ -169,6 +208,8 @@ public class NoteService {
                     .content(note.getContent())
                     .hasSpoilerRisk(note.getHasSpoilerRisk())
                     .rating(note.getRating())
+                    .sentence(note.getSentence())
+                    .topic(note.getTopic())
                     .isHeartClicked(isHeartClicked)
                     .heartCount(note.getHeartCount())
                     .bookName(note.getBook().getTitle())

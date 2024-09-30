@@ -24,4 +24,6 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findAllByBookAndTypeAndIsPrivateOrderByCreatedAtDesc(Book book, NoteType noteType, Boolean isPrivate);
     Optional<Note> findByReadInfoAndType(ReadInfo readInfo, NoteType noteType);
     List<Note> findAllByReadInfo(ReadInfo readInfo);
+
+    List<Note> findAllByDiscussion(Note discussion);
 }
