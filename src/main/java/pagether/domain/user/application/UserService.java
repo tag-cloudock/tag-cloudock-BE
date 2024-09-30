@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import pagether.domain.image.application.ImageService;
 import pagether.domain.oauth.application.OAuthService;
 import pagether.domain.oauth.domain.KakaoUserInfo;
+import pagether.domain.oauth.dto.req.KakaoSignUpRequest;
 import pagether.domain.user.domain.Role;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.dto.req.UpdateUserRequest;
@@ -76,9 +77,9 @@ public class UserService {
         return signResponse;
     }
 
-    public UserResponse kakaoRegister(String nickname, String code) {
-        String email = redisTemplate.opsForValue().get(EMAIL_KEYWORD + code);
-        String phoneNumber = redisTemplate.opsForValue().get(PHONE_NUMBER_KEYWORD + code);
+    public UserResponse kakaoRegister(KakaoSignUpRequest request) {
+        String email = redisTemplate.opsForValue().get(EMAIL_KEYWORD + request.getCode());
+        String phoneNumber = redisTemplate.opsForValue().get(PHONE_NUMBER_KEYWORD + request.getCode());
         if (userRepository.existsUserByUserId(email)) {
             throw new DuplicateUserIdException();
         }
@@ -88,10 +89,14 @@ public class UserService {
                 .id(id)
                 .userId(email)
                 .phone(phoneNumber)
-                .nickName(nickname)
+                .accountName(request.getAccountName())
+                .nickName(request.getNickname())
                 .imgPath(DEFAULT_IMAGE)
                 .role(Role.USER)
                 .bio("")
+                .isHeartAlertEnabled(false)
+                .isFollowAlertEnabled(false)
+                .isCommentAlertEnabled(false)
                 .isAccountPrivate(false)
                 .lastSeenNewsId(0L)
                 .lastSeenAlertId(0L)
@@ -126,15 +131,45 @@ public class UserService {
         return responses;
     }
 
-    public UserResponse updateNicknameAndPhoto(String userId, MultipartFile pic, UpdateUserRequest request) {
+    public UserResponse updateProfileImg(String userId, MultipartFile pic) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         if (pic != null) {
-            String imageFileName = imageService.save(pic, false);
+            String imageFileName = imageService.save(pic);
             user.setImgPath(imageFileName);
         }
-        user.setNickName(request.getNickname());
         User updatedUser = userRepository.save(user);
 
+        return new UserResponse(updatedUser);
+    }
+
+    public UserResponse deleteProfileImg(String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        user.setImgPath(imageService.DEFAULT_IMAGE);
+        User updatedUser = userRepository.save(user);
+        return new UserResponse(updatedUser);
+    }
+
+    public UserResponse updateAccountName(String userId, UpdateUserRequest request) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        if (userRepository.existsByAccountName(request.getAccountName())){
+            throw new IllegalArgumentException();
+        }
+        user.setAccountName(request.getAccountName());
+        User updatedUser = userRepository.save(user);
+        return new UserResponse(updatedUser);
+    }
+
+    public UserResponse updateNickName(String userId, UpdateUserRequest request) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        user.setNickName(request.getNickname());
+        User updatedUser = userRepository.save(user);
+        return new UserResponse(updatedUser);
+    }
+
+    public UserResponse updateBio(String userId, UpdateUserRequest request) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        user.setBio(request.getBio());
+        User updatedUser = userRepository.save(user);
         return new UserResponse(updatedUser);
     }
 

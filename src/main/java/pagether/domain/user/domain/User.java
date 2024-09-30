@@ -22,6 +22,9 @@ public class User {
     private String nickName;
 
     @Column(nullable = false)
+    private String accountName;
+
+    @Column(nullable = false)
     private String bio;
 
     @Column(nullable = false)
@@ -41,6 +44,15 @@ public class User {
 
     @Column(nullable = false)
     private Long lastSeenAlertId;
+
+    @Column(nullable = false)
+    private Boolean isHeartAlertEnabled;
+
+    @Column(nullable = false)
+    private Boolean isFollowAlertEnabled;
+
+    @Column(nullable = false)
+    private Boolean isCommentAlertEnabled;
 
     @Enumerated(EnumType.STRING)
     private Role role;

@@ -19,4 +19,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Boolean existsUserById(String id);
 
     List<User> findAllByNickNameContaining(String keyword, Pageable pageable);
+
+    Boolean existsByAccountName(String accountName);
 }

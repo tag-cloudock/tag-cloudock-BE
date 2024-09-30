@@ -77,7 +77,7 @@ public class NoteService {
                 .rating(request.getType().equals(NoteType.REVIEW) ? request.getRating() : null)
                 .topic(request.getType().equals(NoteType.DISCUSSION) ? request.getTopic() : null)
                 .sentence(request.getType().equals(NoteType.SENTENCE) ? request.getSentence() : null)
-                .isPrivate(request.getIsPrivate())
+                .isPrivate(!request.getType().equals(NoteType.DISCUSSION) && request.getIsPrivate())
                 .hasSpoilerRisk(request.getHasSpoilerRisk())
                 .type(request.getType())
                 .content(request.getContent())
