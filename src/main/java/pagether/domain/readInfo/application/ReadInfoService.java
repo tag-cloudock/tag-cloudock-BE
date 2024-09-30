@@ -11,6 +11,7 @@ import pagether.domain.follow.domain.RequestStatus;
 import pagether.domain.follow.repository.FollowRepository;
 import pagether.domain.note.application.NoteService;
 import pagether.domain.note.domain.Note;
+import pagether.domain.note.domain.NoteType;
 import pagether.domain.note.exception.NoteNotFountException;
 import pagether.domain.note.repository.NoteRepository;
 import pagether.domain.readInfo.domain.ReadInfo;
@@ -19,6 +20,7 @@ import pagether.domain.readInfo.dto.BookImgDTO;
 import pagether.domain.readInfo.dto.ReadFriendInfoDTO;
 import pagether.domain.readInfo.dto.ReadInfoDTO;
 import pagether.domain.readInfo.dto.req.AddReadInfoRequest;
+import pagether.domain.readInfo.dto.req.UpdateDateRequest;
 import pagether.domain.readInfo.dto.req.UpdatePageRequest;
 import pagether.domain.readInfo.dto.req.UpdateStatusRequest;
 import pagether.domain.readInfo.dto.res.ReadInfoByBookResponse;
@@ -30,6 +32,7 @@ import pagether.domain.readInfo.repository.ReadInfoRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.IllegalArgumentException;
 import pagether.global.config.exception.UnauthorizedAccessException;
 
 import java.time.LocalDateTime;
@@ -56,6 +59,9 @@ public class ReadInfoService {
         if (readInfoRepository.existsByBookAndUserAndReadStatus(book, user, ReadStatus.PINNED)){
             readInfo = readInfoRepository.findByBookAndUserAndReadStatus(book, user, ReadStatus.PINNED).orElseThrow(ReadInfoNotFountException::new);
             readInfo.start();
+        } else if (readInfoRepository.existsByBookAndUserAndReadStatus(book, user, ReadStatus.RE_PINNED)){
+            readInfo = readInfoRepository.findByBookAndUserAndReadStatus(book, user, ReadStatus.RE_PINNED).orElseThrow(ReadInfoNotFountException::new);
+            readInfo.start();
         }else{
             if (readInfoRepository.existsByBookAndUser(book, user)){
                 ReadInfo latestReadInfo = readInfoRepository.findByBookAndUserAndIsLatest(book, user, true).orElseThrow(ReadInfoNotFountException::new);
@@ -76,6 +82,20 @@ public class ReadInfoService {
                     .build();
         }
         noteService.newBook(user, book);
+        readInfo = readInfoRepository.save(readInfo);
+        return new ReadInfoResponse(readInfo);
+    }
+
+    public ReadInfoResponse updateDate(UpdateDateRequest request, String userId) {
+        ReadInfo readInfo = readInfoRepository.findById(request.getReadId()).orElseThrow(ReadInfoNotFountException::new);
+        if (!readInfo.getUser().getUserId().equals(userId)){
+            throw new UnauthorizedAccessException();
+        }
+        if (request.getStartDate().isAfter(request.getCompletionDate())){
+            throw new IllegalArgumentException();
+        }
+        readInfo.setStartDate(request.getStartDate());
+        readInfo.setCompletionDate(request.getCompletionDate());
         readInfo = readInfoRepository.save(readInfo);
         return new ReadInfoResponse(readInfo);
     }
@@ -204,7 +224,7 @@ public class ReadInfoService {
         List<ReadInfoDTO> dtos = new ArrayList<>();
         Book book = bookRepository.findByIsbn(isbn).orElseThrow(BookNotFoundException::new);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        List<ReadInfo> readInfos = readInfoRepository.findAllByBookAndUserAndIsLatestAndReadStatusNotInOrderByCreatedAtDesc(book, user,true, Arrays.asList(ReadStatus.PINNED, ReadStatus.RE_PINNED));
+        List<ReadInfo> readInfos = readInfoRepository.findAllByBookAndUserOrderByCreatedAtDesc(book, user);
 
         Boolean isMe = userId.equals(requestedUserId);
         if (readInfos.isEmpty()){
@@ -214,8 +234,8 @@ public class ReadInfoService {
         for(ReadInfo readInfo : readInfos){
             ReadInfoDTO dto;
             if (readInfo.getHasReview()){
-                Note note = noteRepository.findByReadInfo(readInfo).orElseThrow(NoteNotFountException::new);
-                if (isMe){
+                Note note = noteRepository.findByReadInfoAndType(readInfo, NoteType.REVIEW).orElseThrow(NoteNotFountException::new);
+                if (isMe || !note.getIsPrivate()){
                     dto = new ReadInfoDTO(readInfo, note.getRating(), note.getContent());
                 }else{
                     dto = new ReadInfoDTO(readInfo, note.getRating());
@@ -234,9 +254,12 @@ public class ReadInfoService {
     }
 
     public void delete(Long readId) {
-        if (!bookRepository.existsById(readId)) {
-            throw new ReadInfoNotFountException();
+        ReadInfo readInfo = readInfoRepository.findById(readId).orElseThrow(ReadInfoNotFountException::new);;
+        if (!readInfoRepository.existsById(readId)) {
+            throw new UnauthorizedAccessException();
         }
-        bookRepository.deleteById(readId);
+        List<Note> notes = noteRepository.findAllByReadInfo(readInfo);
+        noteRepository.deleteAll(notes);
+        readInfoRepository.deleteById(readId);
     }
 }

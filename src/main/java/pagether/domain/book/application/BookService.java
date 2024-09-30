@@ -8,8 +8,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
 import pagether.domain.book.domain.Book;
 import pagether.domain.book.dto.BookSaveDTO;
@@ -22,6 +25,9 @@ import pagether.domain.book.repository.BookRepository;
 import pagether.domain.category.domain.Category;
 import pagether.domain.category.exception.CategoryNotFoundException;
 import pagether.domain.category.repository.CategoryRepository;
+import pagether.domain.follow.dto.req.AddFollowRequest;
+import pagether.domain.follow.dto.res.FollowResponse;
+import pagether.domain.follow.presentation.constant.ResponseMessage;
 import pagether.domain.news.domain.News;
 import pagether.domain.news.dto.req.AddNewsRequest;
 import pagether.domain.news.dto.res.NewsResponse;
@@ -31,6 +37,7 @@ import pagether.domain.news.repository.NewsRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.dto.ResponseDto;
 
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
@@ -39,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import static org.springframework.http.HttpStatus.OK;
 
 @Service
 @RequiredArgsConstructor
@@ -51,26 +60,27 @@ public class BookService {
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
 
-    @Async
-    public CompletableFuture<Void> save(AddBookRequest request) {
+    public BookResponse save(AddBookRequest request, Boolean isBookAddedDirectly) {
         Category category = categoryRepository.findById(1L).orElseThrow(CategoryNotFoundException::new);
         Book book = Book.builder()
                 .isbn(request.getIsbn())
                 .title(request.getTitle())
+                .pageCount(request.getPageCount())
+                .isBookAddedDirectly(isBookAddedDirectly)
+                .createdAt(LocalDateTime.now())
+                .category(category)
+
+                .coverImgName(request.getCoverImgName())
+                .weight(request.getWeight())
                 .author(request.getAuthor())
                 .publisher(request.getPublisher())
-                .pageCount(request.getPageCount())
-                .coverImgName(request.getCoverImgName())
-                .category(category)
                 .description(request.getDescription())
-                .weight(request.getWeight())
                 .sizeWidth(request.getSizeWidth())
                 .sizeDepth(request.getSizeDepth())
                 .sizeHeight(request.getSizeHeight())
-                .createdAt(LocalDateTime.now())
                 .build();
-        bookRepository.save(book);
-        return CompletableFuture.completedFuture(null);
+        book = bookRepository.save(book);
+        return new BookResponse(book);
     }
 
     private String makeSearchUrl(String keyword, Long page){
@@ -92,7 +102,7 @@ public class BookService {
 
             for (Map<String, Object> itemMap : items) {
                 String isbn = itemMap.get("isbn13").toString();
-                String title = itemMap.get("title").toString();
+                String title = removeSubtitle(itemMap.get("title").toString());
                 String bookCoverImgName = replaceCoverUrl(itemMap.get("cover").toString());
                 String author = extractAuthors(itemMap.get("author").toString());
                 String publisher = itemMap.get("publisher").toString();
@@ -157,7 +167,7 @@ public class BookService {
                     .sizeHeight(sizeHeight)
                     .sizeWidth(sizeWidth)
                     .build();
-            this.save(request);
+            this.save(request, false);
 
             BookDetailResponse response = BookDetailResponse.builder()
                     .isbn(isbn)

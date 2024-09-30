@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pagether.domain.readInfo.dto.ReadFriendInfoDTO;
+import pagether.domain.readInfo.dto.req.UpdateDateRequest;
 import pagether.domain.readInfo.dto.req.UpdatePageRequest;
 import pagether.domain.readInfo.dto.req.UpdateStatusRequest;
 import pagether.domain.readInfo.dto.res.ReadInfoByBookResponse;
@@ -31,6 +32,13 @@ public class ReadInfoApiController {
         ReadInfoResponse response = readInfoService.startRead(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
+
+    @PatchMapping
+    public ResponseDto<ReadInfoResponse> updateDate(@RequestBody UpdateDateRequest request, Authentication authentication) {
+        ReadInfoResponse response = readInfoService.updateDate(request, authentication.getName());
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
+    }
+
 
     @PostMapping("/pin")
     public ResponseDto<ReadInfoResponse> pin(@RequestBody AddReadInfoRequest request, Authentication authentication) {

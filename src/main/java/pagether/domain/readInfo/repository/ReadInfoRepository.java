@@ -26,8 +26,7 @@ public interface ReadInfoRepository extends JpaRepository<ReadInfo, Long> {
 
     List<ReadInfo> findAllByUserAndIsLatest(User user, Boolean isLatest);
 
-
-    List<ReadInfo> findAllByBookAndUserAndIsLatestAndReadStatusNotInOrderByCreatedAtDesc(Book book, User user, boolean isLatest, List<ReadStatus> excludedStatuses);
+    List<ReadInfo> findAllByBookAndUserOrderByCreatedAtDesc(Book book, User user);
 
 
 

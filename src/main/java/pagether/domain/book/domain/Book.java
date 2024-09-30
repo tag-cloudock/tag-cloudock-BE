@@ -21,32 +21,24 @@ public class Book {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
     private String author;
-
-    @Column(nullable = false)
     private String publisher;
 
     @Column(nullable = false)
     private Long pageCount;
 
-    @Column(nullable = false)
     private String description;
-
-    @Column(nullable = false)
     private String coverImgName;
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonIgnore
     private Category category;
-
     private Integer weight;
-
     private Integer sizeDepth;
-
     private Integer sizeHeight;
-
     private Integer sizeWidth;
+
+    @Column(nullable = false)
+    private Boolean isBookAddedDirectly;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

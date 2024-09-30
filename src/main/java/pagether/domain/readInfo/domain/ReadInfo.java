@@ -54,6 +54,14 @@ public class ReadInfo {
     public void setCurrentPage(Long page) {
         this.currentPage = page;
     }
+
+    public void setStartDate(LocalDateTime date) {
+        this.startDate = date;
+    }
+
+    public void setCompletionDate(LocalDateTime date) {
+        this.completionDate = date;
+    }
     public void start() {
         this.readStatus = ReadStatus.READING;
     }
