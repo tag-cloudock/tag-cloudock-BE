@@ -1,5 +1,8 @@
-FROM openjdk:17-jdk-slim
-EXPOSE 8080
-ARG JAR_FILE=./build/libs/pagether-0.0.1-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
-ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
+FROM openjdk:17-jdk
+
+WORKDIR /app
+COPY build/libs/*.jar app.jar
+RUN mkdir -p /app/src/main/resources
+ARG APPLICATION_YML
+RUN echo "$APPLICATION_YML" > /app/src/main/resources/application.yml
+ENTRYPOINT ["java", "-jar", "app.jar"]
