@@ -63,14 +63,11 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i pagether.pem ubuntu@${{ secrets.AWS_EC2_IP }} << 'EOF'
             sudo systemctl start docker
             sudo usermod -aG docker ubuntu
-            
             sudo su - ubuntu -c "exit"
             sudo docker stop pagether-app 2>/dev/null || true
             sudo docker rm pagether-app 2>/dev/null || true
-        
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/pagether-app
-        
             sudo docker run -d -p 8080:8080 --name pagether-app ${{ secrets.DOCKERHUB_USERNAME }}/pagether-app
             sudo docker logs pagether-app
             sudo docker system prune -f
-            EOF
+          EOF
