@@ -12,6 +12,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUserId(String userId);
 
+    Optional<User> findByAccountName(String accountName);
+
     Optional<User> findById(String id);
 
     Boolean existsUserByUserId(String userId);
@@ -21,4 +23,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAllByNickNameContaining(String keyword, Pageable pageable);
 
     Boolean existsByAccountName(String accountName);
+
+
 }

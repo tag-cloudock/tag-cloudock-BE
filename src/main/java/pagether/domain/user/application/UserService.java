@@ -2,16 +2,18 @@ package pagether.domain.user.application;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import pagether.domain.image.application.ImageService;
 import pagether.domain.oauth.application.OAuthService;
 import pagether.domain.oauth.domain.KakaoUserInfo;
 import pagether.domain.oauth.dto.req.KakaoSignUpRequest;
 import pagether.domain.user.domain.Role;
 import pagether.domain.user.domain.User;
-import pagether.domain.user.dto.req.UpdateUserRequest;
+import pagether.domain.user.dto.req.*;
 import pagether.domain.user.dto.res.UserInfoResponse;
 import pagether.domain.user.dto.res.UserResponse;
 import pagether.domain.user.exception.DuplicateUserIdException;
+import pagether.domain.user.exception.IncorrectPasswordException;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
 import pagether.global.config.security.JwtProvider;
@@ -89,6 +91,110 @@ public class UserService {
                 .id(id)
                 .userId(email)
                 .phone(phoneNumber)
+                .accountName(request.getAccountName())
+                .nickName(request.getNickname())
+                .imgPath(DEFAULT_IMAGE)
+                .role(Role.USER)
+                .bio("")
+                .isHeartAlertEnabled(false)
+                .isFollowAlertEnabled(false)
+                .isCommentAlertEnabled(false)
+                .isAccountPrivate(false)
+                .lastSeenNewsId(0L)
+                .lastSeenAlertId(0L)
+                .build();
+        userRepository.save(user);
+        UserResponse signResponse = UserResponse.builder()
+                .id(user.getId())
+                .userId(user.getUserId())
+                .nickname(user.getNickName())
+                .roles(user.getRole())
+                .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
+                .build();
+        return signResponse;
+    }
+
+    public void emailCertification(EmailSignUpRequest request) {
+    }
+
+    public UserResponse emailLogin(EmailSignInRequest request) {
+        User user;
+        if (request.getEmail() != null && userRepository.existsUserByUserId(request.getEmail())){
+            user = userRepository.findByUserId(request.getEmail()).orElseThrow(UserNotFountException::new);
+        }
+        else if (request.getAccountName() != null && userRepository.existsByAccountName(request.getAccountName())){
+            user = userRepository.findByAccountName(request.getAccountName()).orElseThrow(UserNotFountException::new);
+        }else{
+            throw new UserNotFountException();
+        }
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassWord())) {
+            throw new IncorrectPasswordException();
+        }
+
+        UserResponse signResponse = UserResponse.builder()
+                .id(user.getId())
+                .userId(user.getUserId())
+                .nickname(user.getNickName())
+                .roles(user.getRole())
+                .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
+                .build();
+        return signResponse;
+    }
+
+    public UserResponse emailRegister(EmailSignUpRequest request) {
+        if (userRepository.existsUserByUserId(request.getEmail())) {
+            throw new DuplicateUserIdException();
+        }
+        String id = UUID.randomUUID().toString();
+
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        User user = User.builder()
+                .id(id)
+                .userId(request.getEmail())
+                .accountName(request.getAccountName())
+                .nickName(request.getNickname())
+                .passWord(encodedPassword)
+                .imgPath(DEFAULT_IMAGE)
+                .role(Role.USER)
+                .bio("")
+                .isHeartAlertEnabled(false)
+                .isFollowAlertEnabled(false)
+                .isCommentAlertEnabled(false)
+                .isAccountPrivate(false)
+                .lastSeenNewsId(0L)
+                .lastSeenAlertId(0L)
+                .build();
+        userRepository.save(user);
+        UserResponse signResponse = UserResponse.builder()
+                .id(user.getId())
+                .userId(user.getUserId())
+                .nickname(user.getNickName())
+                .roles(user.getRole())
+                .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
+                .build();
+        return signResponse;
+    }
+
+    public void changePassword(ChangePasswordRequest request, String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassWord())) {
+            throw new IncorrectPasswordException();
+        }
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        user.setPassWord(encodedPassword);
+        userRepository.save(user);
+    }
+
+    public UserResponse guestRegister(GuestSignUpRequest request) {
+        String userId = UUID.randomUUID().toString();
+        String id = UUID.randomUUID().toString();
+        User user = User.builder()
+                .id(id)
+                .userId(userId)
                 .accountName(request.getAccountName())
                 .nickName(request.getNickname())
                 .imgPath(DEFAULT_IMAGE)

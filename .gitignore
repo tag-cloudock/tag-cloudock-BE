@@ -1,38 +1,32 @@
-HELP.md
-.gradle
-.DS_Store
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.db
+*.log
+
+# Gradle
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+!gradle/wrapper/gradle-wrapper.properties
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-### IntelliJ IDEA ###
-.idea
-*.iws
+# IntelliJ IDEA
+.idea/
 *.iml
 *.ipr
+*.iws
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+*.class
+*.log
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+# 환경설정
+/src/main/resources/application-dev.yml
+/src/main/resources/application-prod.yml
 
-### VS Code ###
-.vscode/
+# 기타
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

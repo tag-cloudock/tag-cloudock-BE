@@ -1,8 +1,9 @@
 package pagether.domain.user.presentation;
 
+import pagether.domain.oauth.dto.req.KakaoSignUpRequest;
 import pagether.domain.report.dto.req.AddReportRequest;
 import pagether.domain.user.application.UserService;
-import pagether.domain.user.dto.req.UpdateUserRequest;
+import pagether.domain.user.dto.req.*;
 import pagether.domain.user.dto.res.UserInfoResponse;
 import pagether.domain.user.dto.res.UserResponse;
 import pagether.global.config.dto.ResponseDto;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import static pagether.domain.oauth.presentation.constant.ResponseMessage.SUCCESS_REGISTER;
 import static pagether.domain.user.presentation.constant.ResponseMessage.*;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -22,6 +24,30 @@ import static org.springframework.http.HttpStatus.OK;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+
+    @PostMapping(value = "/guest")
+    public ResponseDto<UserResponse> guestSignUp(@RequestBody GuestSignUpRequest request) {
+        UserResponse response = userService.guestRegister(request);
+        return ResponseDto.of(OK.value(), SUCCESS_REGISTER.getMessage(), response);
+    }
+
+    @GetMapping(value = "/email")
+    public ResponseDto<UserResponse> emailSignIn(@RequestBody EmailSignInRequest request) {
+        UserResponse response = userService.emailLogin(request);
+        return ResponseDto.of(OK.value(), SUCCESS_LOGIN.getMessage(), response);
+    }
+
+    @PostMapping(value = "/email")
+    public ResponseDto<UserResponse> emailSignUp(@RequestBody EmailSignUpRequest request) {
+        UserResponse response = userService.emailRegister(request);
+        return ResponseDto.of(OK.value(), SUCCESS_REGISTER.getMessage(), response);
+    }
+
+    @PatchMapping(value = "/password")
+    public ResponseDto changePassword(@RequestBody ChangePasswordRequest request, Authentication authentication) {
+        userService.changePassword(request, authentication.getName());
+        return ResponseDto.of(OK.value(), SUCCESS_UPDATE.getMessage());
+    }
 
     @GetMapping
     public ResponseDto<UserInfoResponse> getInfo(@RequestParam String id) {

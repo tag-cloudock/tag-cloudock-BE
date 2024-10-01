@@ -1,64 +1,57 @@
-name: Java CI with Gradle
+name: Deploy to Amazon EC2 / Spring Boot with Gradle
+
+env:
+  PROJECT_NAME: pagether
+  BUCKET_NAME: pagether-s3-bucket
+  CODE_DEPLOY_APP: pagether-codedeploy-app
+  CODE_DEPLOY_DEPLOYMENT_GROUP: pagether-codedeploy-deployment-group
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  build-docker-image:
+  build:
+    name: CI/CD
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
 
-    - name: Run chmod to make graldew executable
-      run: chmod +x ./gradlew
-      
-    - name: Build with Gradle
-      run: ./gradlew clean bootJar -Dspring.profiles.active=prod
-      
-    - name: Build Docker image
-      run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/pagether-app .
-      
-    - name: Docker login
-      uses: docker/login-action@v1
-      with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
-    - name: Push to Docker Hub
-      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/pagether-app
-
-  cd-pipeline:
-    needs: build-docker-image
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Copy file via SSH
-        uses: appleboy/scp-action@master
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ubuntu
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: 22
-          source: "./docker-compose.yml"
-          target: "/home/ubuntu/"
-    
-      - name: Execute remote SSH commands
-        uses: appleboy/ssh-action@master
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ubuntu
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: 22
-          script: |
-            sudo docker rm -f $(docker ps -qa)
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/pagether-app
-            sudo docker-compose up -d
-            sudo docker image prune -f
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+
+      - name: Build with Gradle
+        run: ./gradlew build --no-daemon
+
+      - name: Make zip file
+        run: zip -r ./$PROJECT_NAME.zip build/libs/*
+        shell: bash
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION}}
+
+
+      - name: Upload to S3
+        run: aws s3 cp $PROJECT_NAME.zip s3://$BUCKET_NAME/deploy/$PROJECT_NAME.zip --region ${{ secrets.AWS_REGION}}
+
+      - name: Code Deploy
+        run: >
+          aws deploy create-deployment --application-name $CODE_DEPLOY_APP
+          --deployment-config-name CodeDeployDefault.AllAtOnce
+          --deployment-group-name $CODE_DEPLOY_DEPLOYMENT_GROUP
+          --s3-location bucket=$BUCKET_NAME,bundleType=zip,key=deploy/$PROJECT_NAME.zip

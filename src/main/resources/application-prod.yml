@@ -1,0 +1,37 @@
+spring:
+  jpa:
+    show-sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  datasource:
+    url: jdbc:mysql://43.202.228.198:3306/pagether
+    username: root
+    password: tkrhk0123!!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 20010203
+  servlet:
+    multipart:
+      enabled: true
+jwt:
+  secret:
+    key: youcantrevealtheaccesssecretkey123459876
+image:
+  path: /home/ubuntu/images/
+  secret-key: BARAMIMPORTANT
+solapi:
+  apikey: NCSF9OEUAONU71TT
+  secretkey: 2UZDHFU3CRNXEMLNMKHLCY5QONDYYUNM
+  pf-id: KA01PF240402054948855bCXuEdq9mfX
+  template-id: KA01TP240402063143434U8UrHsIMotu
+  from-number: 01052395132
+kakao:
+  rest-api-key: ddef038fa084012b787cdc2e0ac14a40
+
+aladin:
+  ttb-key: ttbMrhappyjs1948005
