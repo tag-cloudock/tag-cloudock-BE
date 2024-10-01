@@ -60,15 +60,15 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run:
-          ssh -o StrictHostKeyChecking=no -i pagether.pem ubuntu@${{ secrets.AWS_EC2_IP }} << 'EOF'
-            sudo mkdir ~/test
-            sudo systemctl start docker
-            sudo usermod -aG docker ubuntu
-            sudo su - ubuntu -c "exit"
-            sudo docker stop pagether-app 2>/dev/null || true
-            sudo docker rm pagether-app 2>/dev/null || true
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/pagether-app
-            sudo docker run -d -p 8080:8080 --name pagether-app ${{ secrets.DOCKERHUB_USERNAME }}/pagether-app
-            sudo docker logs pagether-app
-            sudo docker system prune -f
+          ssh -o StrictHostKeyChecking=no -i pagether.pem ubuntu@<EC2_IP> << 'EOF'
+          sudo mkdir ~/test
+          sudo systemctl start docker
+          sudo usermod -aG docker ubuntu
+          sudo su - ubuntu -c "exit"
+          sudo docker stop pagether-app 2>/dev/null || true
+          sudo docker rm pagether-app 2>/dev/null || true
+          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/pagether-app
+          sudo docker run -d -p 8080:8080 --name pagether-app ${{ secrets.DOCKERHUB_USERNAME }}/pagether-app
+          sudo docker logs pagether-app
+          sudo docker system prune -f
           EOF
