@@ -19,11 +19,13 @@ public class NoteContentResponse {
     private Boolean isPrivate;
     private Boolean isHeartClicked;
     private Boolean hasSpoilerRisk;
+    private String imgName;
     private LocalDateTime createdAt;
 
     @Builder
     public NoteContentResponse(Note note, Boolean isHeartClicked) {
         noteId = note.getNoteId();
+        imgName = note.getImgName();
         rating = note.getRating();
         topic = note.getTopic();
         sentence = note.getSentence();

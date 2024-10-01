@@ -3,12 +3,14 @@ package pagether.domain.note.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import pagether.domain.alert.application.AlertService;
 import pagether.domain.alert.domain.AlertType;
 import pagether.domain.book.domain.Book;
 import pagether.domain.book.exception.BookNotFoundException;
 import pagether.domain.book.repository.BookRepository;
 import pagether.domain.heart.repository.HeartRepository;
+import pagether.domain.image.application.ImageService;
 import pagether.domain.news.domain.News;
 import pagether.domain.news.dto.req.AddNewsRequest;
 import pagether.domain.news.dto.res.NewsResponse;
@@ -51,11 +53,16 @@ public class NoteService {
     private final HeartRepository heartRepository;
     private final ReadInfoRepository readInfoRepository;
     private final AlertService alertService;
+    private final ImageService imageService;
 
-    public NoteResponse save(AddNoteRequest request, String userId) {
+    public NoteResponse save(AddNoteRequest request, String userId,  MultipartFile pic) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Book book = bookRepository.findByIsbn(request.getIsbn()).orElseThrow(BookNotFoundException::new);
         ReadInfo lastReadInfo = readInfoRepository.findByBookAndUserAndIsLatest(book, user, true).orElseThrow(ReadInfoNotFountException::new);
+        String imgName = null;
+        if (pic != null) {
+            imgName = imageService.save(pic);
+        }
         if (request.getType().equals(NoteType.REVIEW)){
             if (!(lastReadInfo.getReadStatus().equals(ReadStatus.READ) || lastReadInfo.getReadStatus().equals(ReadStatus.STOPPED))){
                 throw new ReviewNotAllowedException();
@@ -71,6 +78,7 @@ public class NoteService {
         Note note = Note.builder()
                 .user(user)
                 .book(book)
+                .imgName(imgName)
                 .heartCount(0L)
                 .readInfo(lastReadInfo)
                 .discussion(request.getType().equals(NoteType.COMMENT) ? discussion : null)
@@ -173,6 +181,7 @@ public class NoteService {
                     .userName(note.getUser().getNickName())
                     .userProfileImgName(note.getUser().getImgPath())
                     .noteId(note.getNoteId())
+                    .imgName(note.getImgName())
                     .hasSpoilerRisk(note.getHasSpoilerRisk())
                     .content(note.getContent())
                     .rating(note.getRating())
@@ -205,6 +214,7 @@ public class NoteService {
                     .userName(note.getUser().getNickName())
                     .userProfileImgName(note.getUser().getImgPath())
                     .noteId(note.getNoteId())
+                    .imgName(note.getImgName())
                     .content(note.getContent())
                     .hasSpoilerRisk(note.getHasSpoilerRisk())
                     .rating(note.getRating())

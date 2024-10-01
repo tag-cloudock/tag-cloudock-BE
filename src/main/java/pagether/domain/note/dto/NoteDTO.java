@@ -15,6 +15,7 @@ public class NoteDTO {
     private Long noteId;
     private String userName;
     private String userProfileImgName;
+    private String imgName;
     private String content;
     private Long heartCount;
     private Float rating;

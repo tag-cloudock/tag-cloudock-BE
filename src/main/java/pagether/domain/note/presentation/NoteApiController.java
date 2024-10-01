@@ -2,6 +2,7 @@ package pagether.domain.note.presentation;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import pagether.domain.news.presentation.constant.ResponseMessage;
 import pagether.domain.note.application.NoteService;
 import pagether.domain.note.dto.CommentDTO;
@@ -24,8 +25,8 @@ public class NoteApiController {
     private final NoteService noteService;
 
     @PostMapping
-    public ResponseDto<NoteResponse> save(@RequestBody AddNoteRequest request, Authentication authentication) {
-        NoteResponse response = noteService.save(request, authentication.getName());
+    public ResponseDto<NoteResponse> save(@RequestPart(required = false) MultipartFile pic,@RequestPart AddNoteRequest request, Authentication authentication) {
+        NoteResponse response = noteService.save(request, authentication.getName(), pic);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
 

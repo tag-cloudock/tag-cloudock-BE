@@ -52,6 +52,8 @@ public class Note {
 
     private Float rating;
 
+    private String imgName;
+
     @OneToOne(fetch = FetchType.EAGER)
     @JsonIgnore
     private Note discussion;

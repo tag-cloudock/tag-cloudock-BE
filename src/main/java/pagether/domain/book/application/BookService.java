@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import pagether.domain.book.domain.Book;
 import pagether.domain.book.dto.BookSaveDTO;
 import pagether.domain.book.dto.req.AddBookRequest;
@@ -28,6 +29,7 @@ import pagether.domain.category.repository.CategoryRepository;
 import pagether.domain.follow.dto.req.AddFollowRequest;
 import pagether.domain.follow.dto.res.FollowResponse;
 import pagether.domain.follow.presentation.constant.ResponseMessage;
+import pagether.domain.image.application.ImageService;
 import pagether.domain.news.domain.News;
 import pagether.domain.news.dto.req.AddNewsRequest;
 import pagether.domain.news.dto.res.NewsResponse;
@@ -59,17 +61,43 @@ public class BookService {
     private String TTB_KEY;
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
+    private final ImageService imageService;
 
-    public BookResponse save(AddBookRequest request, Boolean isBookAddedDirectly) {
+    public BookResponse save(AddBookRequest request, MultipartFile pic) {
+        Category category = categoryRepository.findById(1L).orElseThrow(CategoryNotFoundException::new);
+        String imgName = null;
+        if (pic != null) {
+            imgName = imageService.save(pic);
+        }
+        Book book = Book.builder()
+                .isbn(request.getIsbn())
+                .title(request.getTitle())
+                .pageCount(request.getPageCount())
+                .isBookAddedDirectly(true)
+                .createdAt(LocalDateTime.now())
+                .category(category)
+                .coverImgName(imgName)
+                .weight(request.getWeight())
+                .author(request.getAuthor())
+                .publisher(request.getPublisher())
+                .description(request.getDescription())
+                .sizeWidth(request.getSizeWidth())
+                .sizeDepth(request.getSizeDepth())
+                .sizeHeight(request.getSizeHeight())
+                .build();
+        book = bookRepository.save(book);
+        return new BookResponse(book);
+    }
+
+    public BookResponse save(AddBookRequest request) {
         Category category = categoryRepository.findById(1L).orElseThrow(CategoryNotFoundException::new);
         Book book = Book.builder()
                 .isbn(request.getIsbn())
                 .title(request.getTitle())
                 .pageCount(request.getPageCount())
-                .isBookAddedDirectly(isBookAddedDirectly)
+                .isBookAddedDirectly(false)
                 .createdAt(LocalDateTime.now())
                 .category(category)
-
                 .coverImgName(request.getCoverImgName())
                 .weight(request.getWeight())
                 .author(request.getAuthor())
@@ -167,7 +195,7 @@ public class BookService {
                     .sizeHeight(sizeHeight)
                     .sizeWidth(sizeWidth)
                     .build();
-            this.save(request, false);
+            this.save(request);
 
             BookDetailResponse response = BookDetailResponse.builder()
                     .isbn(isbn)

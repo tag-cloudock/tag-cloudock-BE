@@ -3,6 +3,7 @@ package pagether.domain.book.presentation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import pagether.domain.book.application.BookService;
 import pagether.domain.book.dto.req.AddBookRequest;
 import pagether.domain.book.dto.res.BookDetailResponse;
@@ -25,8 +26,8 @@ public class BookApiController {
 
 
     @PostMapping
-    public ResponseDto<BookResponse> save(@RequestBody AddBookRequest request) {
-        BookResponse response = bookService.save(request, true);
+    public ResponseDto<BookResponse> save(@RequestPart AddBookRequest request, @RequestPart(required = false) MultipartFile pic) {
+        BookResponse response = bookService.save(request, pic);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
 
