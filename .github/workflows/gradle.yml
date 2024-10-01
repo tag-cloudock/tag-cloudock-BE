@@ -60,7 +60,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run:
-          ssh -o StrictHostKeyChecking=no -i pagether.pem ubuntu@<EC2_IP> << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i pagether.pem ubuntu@${{ secrets.AWS_EC2_IP }} << 'EOF'
           sudo mkdir ~/test
           sudo systemctl start docker
           sudo usermod -aG docker ubuntu
