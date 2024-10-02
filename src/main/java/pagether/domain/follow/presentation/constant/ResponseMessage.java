@@ -11,7 +11,7 @@ public enum ResponseMessage {
     SUCCESS_UPDATE("수정에 성공했습니다."),
     SUCCESS_DELETE("삭제에 성공했습니다."),
     FOLLOW_NOT_FOUND("존재하지 않는 항목입니다."),
-    ALREADY_FOLLOWED_AND_NOT_FOLLOWED("이미 팔로우 했거나, 팔로우 하지 않았습니다."),
+    ALREADY_FOLLOWED("이미 팔로우 하고 있습니다."),
     FOLLOW_NOT_ALLOWED("팔로우가 허용되지 않습니다."),
     ;
     private String message;

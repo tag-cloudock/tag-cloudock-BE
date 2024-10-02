@@ -9,7 +9,7 @@ import pagether.domain.book.domain.Book;
 @NoArgsConstructor
 @Getter
 @Setter
-
+@Builder
 public class BookDetailResponse {
     private String isbn;
     private String title;
@@ -19,8 +19,6 @@ public class BookDetailResponse {
     private String description;
     private Long pageCount;
 
-
-    @Builder
     public BookDetailResponse(String isbn, String title, String bookCoverImgName, String author, String publisher, String description, Long pageCount) {
         this.title = title;
         this.isbn = isbn;
@@ -31,7 +29,6 @@ public class BookDetailResponse {
         this.pageCount = pageCount;
     }
 
-    @Builder
     public BookDetailResponse(Book book){
         this.title = book.getTitle();
         this.isbn = book.getIsbn();

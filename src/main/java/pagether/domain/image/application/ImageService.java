@@ -20,8 +20,11 @@ public class ImageService {
     public String DEFAULT_IMAGE = "default.png";
 
 
-    public String save(MultipartFile pic) {
+    public String save(MultipartFile pic, Boolean isReturnNull) {
         if (pic == null) {
+            if (isReturnNull){
+                return null;
+            }
             return DEFAULT_IMAGE;
         }
         UUID uuid = UUID.randomUUID();

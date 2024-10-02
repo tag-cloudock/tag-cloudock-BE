@@ -65,10 +65,7 @@ public class BookService {
 
     public BookResponse save(AddBookRequest request, MultipartFile pic) {
         Category category = categoryRepository.findById(1L).orElseThrow(CategoryNotFoundException::new);
-        String imgName = null;
-        if (pic != null) {
-            imgName = imageService.save(pic);
-        }
+        String imgName = imageService.save(pic, true);
         Book book = Book.builder()
                 .isbn(request.getIsbn())
                 .title(request.getTitle())
@@ -125,27 +122,23 @@ public class BookService {
         HttpEntity<?> entity = new HttpEntity<>(new HttpHeaders());
         ResponseEntity<Map> resultMap = restTemplate.exchange(makeSearchUrl(keyword, 1L), HttpMethod.GET, entity, Map.class);
         Map<String, Object> body = resultMap.getBody();
-        if (body != null) {
-            List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("item");
+        if (body != null)
+            return responses;
 
-            for (Map<String, Object> itemMap : items) {
-                String isbn = itemMap.get("isbn13").toString();
-                String title = removeSubtitle(itemMap.get("title").toString());
-                String bookCoverImgName = replaceCoverUrl(itemMap.get("cover").toString());
-                String author = extractAuthors(itemMap.get("author").toString());
-                String publisher = itemMap.get("publisher").toString();
-
-                BookSearchResponse response = BookSearchResponse.builder()
-                        .isbn(isbn)
-                        .title(title)
-                        .bookCoverImgName(bookCoverImgName)
-                        .author(author)
-                        .publisher(publisher)
-                        .build();
-                responses.add(response);
-            }
+        List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("item");
+        for (Map<String, Object> itemMap : items) {
+            responses.add(makeSearchItemResponse(itemMap));
         }
         return responses;
+    }
+
+    public BookSearchResponse makeSearchItemResponse(Map<String, Object> itemMap) {
+        String isbn = itemMap.get("isbn13").toString();
+        String title = removeSubtitle(itemMap.get("title").toString());
+        String bookCoverImgName = replaceCoverUrl(itemMap.get("cover").toString());
+        String author = extractAuthors(itemMap.get("author").toString());
+        String publisher = itemMap.get("publisher").toString();
+        return new BookSearchResponse(isbn, title, bookCoverImgName, author, publisher);
     }
 
     public BookDetailResponse getBook(String isbn) {
@@ -161,54 +154,43 @@ public class BookService {
         HttpEntity<?> entity = new HttpEntity<>(new HttpHeaders());
         ResponseEntity<Map> resultMap = restTemplate.exchange(makeLookUpUrl(isbn), HttpMethod.GET, entity, Map.class);
         Map<String, Object> body = resultMap.getBody();
-        System.out.println(body.toString());
-        if (body != null) {
-            List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("item");
-            Map<String, Object> item = items.get(0);
-            String title = item.get("title").toString();
-            String bookCoverImgName = replaceCoverUrl(item.get("cover").toString());
-            String author = extractAuthors(item.get("author").toString());
-            String publisher = item.get("publisher").toString();
-            String description = item.get("description").toString();
-            Long categoryId = Long.parseLong(item.get("categoryId").toString());
-            Map<String, Object> subInfo = (Map<String, Object>) item.get("subInfo");
-            Long itemPage = Long.parseLong(subInfo.get("itemPage").toString());
-            String subTitle = subInfo.get("subTitle").toString();
-            Map<String, Object> packing = (Map<String, Object>) subInfo.get("packing");
-            Integer weight = Integer.parseInt(packing.get("weight").toString());
-            Integer sizeDepth = Integer.parseInt(packing.get("sizeDepth").toString());
-            Integer sizeHeight = Integer.parseInt(packing.get("sizeHeight").toString());
-            Integer sizeWidth = Integer.parseInt(packing.get("sizeWidth").toString());
-            title = removeSubtitle2(title, subTitle);
+        if (body != null)
+            throw new BookNotFoundException();
 
-            AddBookRequest request = AddBookRequest.builder()
-                    .isbn(isbn)
-                    .title(title)
-                    .author(author)
-                    .publisher(publisher)
-                    .pageCount(itemPage)
-                    .categoryId(categoryId)
-                    .description(description)
-                    .coverImgName(bookCoverImgName)
-                    .weight(weight)
-                    .sizeDepth(sizeDepth)
-                    .sizeHeight(sizeHeight)
-                    .sizeWidth(sizeWidth)
-                    .build();
-            this.save(request);
+        List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("item");
+        Map<String, Object> item = items.get(0);
+        String title = item.get("title").toString();
+        String bookCoverImgName = replaceCoverUrl(item.get("cover").toString());
+        String author = extractAuthors(item.get("author").toString());
+        String publisher = item.get("publisher").toString();
+        String description = item.get("description").toString();
+        Long categoryId = Long.parseLong(item.get("categoryId").toString());
+        Map<String, Object> subInfo = (Map<String, Object>) item.get("subInfo");
+        Long itemPage = Long.parseLong(subInfo.get("itemPage").toString());
+        String subTitle = subInfo.get("subTitle").toString();
+        Map<String, Object> packing = (Map<String, Object>) subInfo.get("packing");
+        Integer weight = Integer.parseInt(packing.get("weight").toString());
+        Integer sizeDepth = Integer.parseInt(packing.get("sizeDepth").toString());
+        Integer sizeHeight = Integer.parseInt(packing.get("sizeHeight").toString());
+        Integer sizeWidth = Integer.parseInt(packing.get("sizeWidth").toString());
+        title = removeSubtitle2(title, subTitle);
 
-            BookDetailResponse response = BookDetailResponse.builder()
-                    .isbn(isbn)
-                    .title(title)
-                    .bookCoverImgName(bookCoverImgName)
-                    .author(author)
-                    .pageCount(itemPage)
-                    .description(description)
-                    .publisher(publisher)
-                    .build();
-            return response;
-        }
-        throw new BookNotFoundException();
+        AddBookRequest request = AddBookRequest.builder()
+                .isbn(isbn)
+                .title(title)
+                .author(author)
+                .publisher(publisher)
+                .pageCount(itemPage)
+                .categoryId(categoryId)
+                .description(description)
+                .coverImgName(bookCoverImgName)
+                .weight(weight)
+                .sizeDepth(sizeDepth)
+                .sizeHeight(sizeHeight)
+                .sizeWidth(sizeWidth)
+                .build();
+        this.save(request);
+        return new BookDetailResponse(isbn, title, bookCoverImgName, author, publisher, description, itemPage);
     }
 
     public static String replaceCoverUrl(String original) {
@@ -238,7 +220,6 @@ public class BookService {
 
         for (String part : parts) {
             part = part.trim();
-
             if (!part.contains("(")) {
                 authors.append(part).append(", ");
             } else {
@@ -250,7 +231,6 @@ public class BookService {
         if (authors.length() > 0) {
             authors.setLength(authors.length() - 2);
         }
-
         return authors.toString();
     }
 

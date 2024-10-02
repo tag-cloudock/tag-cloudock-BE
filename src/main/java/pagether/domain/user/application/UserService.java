@@ -16,6 +16,7 @@ import pagether.domain.user.exception.DuplicateUserIdException;
 import pagether.domain.user.exception.IncorrectPasswordException;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.UnauthorizedAccessException;
 import pagether.global.config.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -240,7 +241,7 @@ public class UserService {
     public UserResponse updateProfileImg(String userId, MultipartFile pic) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         if (pic != null) {
-            String imageFileName = imageService.save(pic);
+            String imageFileName = imageService.save(pic, false);
             user.setImgPath(imageFileName);
         }
         User updatedUser = userRepository.save(user);
@@ -278,6 +279,20 @@ public class UserService {
         User updatedUser = userRepository.save(user);
         return new UserResponse(updatedUser);
     }
+
+    public void validateOwnership(String ownerId, String requesterId) {
+        if (!ownerId.equals(requesterId)){
+            throw new UnauthorizedAccessException();
+        }
+    }
+
+    public Boolean isOwner(String ownerId, String requesterId) {
+        if (ownerId.equals(requesterId)){
+            return true;
+        }
+        return false;
+    }
+
 
     public UserResponse withdrawal(String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(IllegalArgumentException::new);

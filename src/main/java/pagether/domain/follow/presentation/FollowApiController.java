@@ -23,19 +23,6 @@ public class FollowApiController {
         FollowResponse response = followService.save(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
-
-    @GetMapping("/accept/{followId}")
-    public ResponseDto accept(@PathVariable Long followId) {
-        followService.accept(followId);
-        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage());
-    }
-
-    @GetMapping("/reject/{followId}")
-    public ResponseDto reject(@PathVariable Long followId) {
-        followService.reject(followId);
-        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage());
-    }
-
     @GetMapping("/list")
     public ResponseDto<FollowListResponse> getList(Authentication authentication) {
         FollowListResponse response = followService.getUsers(authentication.getName());
@@ -46,15 +33,24 @@ public class FollowApiController {
         FollowCountResponse response = followService.getCount(authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
-    @DeleteMapping("/following/{followeeId}")
-    public ResponseDto deleteFollowing(@PathVariable String followeeId, Authentication authentication) {
-        followService.deleteFollowing(followeeId, authentication.getName());
+    @PatchMapping("/accept/{followId}")
+    public ResponseDto accept(@PathVariable Long followId) {
+        followService.accept(followId);
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_UPDATE.getMessage());
+    }
+    @DeleteMapping("/reject/{followId}")
+    public ResponseDto reject(@PathVariable Long followId) {
+        followService.reject(followId);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_DELETE.getMessage());
     }
-
+    @DeleteMapping("/following/{followeeId}")
+    public ResponseDto deleteFollowing(@PathVariable String followeeId, Authentication authentication) {
+        followService.delete(followeeId, authentication.getName());
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_DELETE.getMessage());
+    }
     @DeleteMapping("/follower/{followerId}")
     public ResponseDto deleteFollower(@PathVariable String followerId, Authentication authentication) {
-        followService.deleteFollower(followerId, authentication.getName());
+        followService.delete(authentication.getName(), followerId);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_DELETE.getMessage());
     }
 }

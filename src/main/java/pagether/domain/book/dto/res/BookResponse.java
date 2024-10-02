@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 public class BookResponse {
     private String bookId;
     private LocalDateTime createdAt;
 
-    @Builder
     public BookResponse(Book book) {
         bookId = book.getIsbn();
         createdAt = book.getCreatedAt();

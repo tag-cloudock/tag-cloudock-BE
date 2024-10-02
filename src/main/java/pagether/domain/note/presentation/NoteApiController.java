@@ -60,6 +60,12 @@ public class NoteApiController {
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 
+    @GetMapping("/hearted")
+    public ResponseDto<List<NoteDTO>> getHeartedNotes(@RequestParam String userId) {
+        List<NoteDTO> response = noteService.getHeartedNotes(userId);
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseDto delete(@PathVariable Long id, Authentication authentication) {
         noteService.delete(id, authentication.getName());

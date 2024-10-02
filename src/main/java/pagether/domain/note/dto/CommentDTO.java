@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import pagether.domain.note.domain.Note;
 import pagether.domain.note.domain.NoteType;
 
 import java.time.LocalDateTime;
@@ -22,4 +23,14 @@ public class CommentDTO {
     private Boolean isHeartClicked;
     private NoteType type;
     private LocalDateTime createdAt;
+
+    public CommentDTO(Note note, Boolean isHeartClicked) {
+        noteId = note.getNoteId();
+        userName = note.getUser().getNickName();
+        userProfileImgName = note.getUser().getImgPath();
+        content = note.getContent();
+        this.isHeartClicked = isHeartClicked;
+        heartCount = note.getHeartCount();
+        createdAt = LocalDateTime.now();
+    }
 }

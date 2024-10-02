@@ -25,12 +25,6 @@ public class HeartApiController {
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
 
-    @GetMapping
-    public ResponseDto<List<NoteDTO>> get(@RequestParam String userId) {
-        List<NoteDTO> response = heartService.get(userId);
-        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
-    }
-
     @DeleteMapping("/{noteId}")
     public ResponseDto delete(@PathVariable Long noteId, Authentication authentication) {
         heartService.delete(noteId, authentication.getName());

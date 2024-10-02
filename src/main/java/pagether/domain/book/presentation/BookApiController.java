@@ -1,7 +1,6 @@
 package pagether.domain.book.presentation;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pagether.domain.book.application.BookService;
@@ -10,7 +9,6 @@ import pagether.domain.book.dto.res.BookDetailResponse;
 import pagether.domain.book.dto.res.BookResponse;
 import pagether.domain.book.dto.res.BookSearchResponse;
 import pagether.domain.book.presentation.constant.ResponseMessage;
-import pagether.domain.follow.dto.res.FollowResponse;
 import pagether.global.config.dto.ResponseDto;
 
 import java.util.List;
@@ -24,17 +22,10 @@ public class BookApiController {
 
     private final BookService bookService;
 
-
     @PostMapping
     public ResponseDto<BookResponse> save(@RequestPart AddBookRequest request, @RequestPart(required = false) MultipartFile pic) {
         BookResponse response = bookService.save(request, pic);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
-    }
-
-    @GetMapping("/search")
-    public ResponseDto<List<BookSearchResponse>> search(@RequestParam String keyword) {
-        List<BookSearchResponse> responses = bookService.searchFromAladin(keyword);
-        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), responses);
     }
 
     @GetMapping
@@ -43,4 +34,9 @@ public class BookApiController {
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 
+    @GetMapping("/search")
+    public ResponseDto<List<BookSearchResponse>> search(@RequestParam String keyword) {
+        List<BookSearchResponse> responses = bookService.searchFromAladin(keyword);
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), responses);
+    }
 }

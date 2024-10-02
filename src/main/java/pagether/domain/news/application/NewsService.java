@@ -1,6 +1,7 @@
 package pagether.domain.news.application;
 
 import org.springframework.scheduling.annotation.EnableAsync;
+import pagether.domain.alert.dto.res.AlertResponse;
 import pagether.domain.news.domain.News;
 import pagether.domain.news.dto.req.AddNewsRequest;
 import pagether.domain.news.dto.res.NewsResponse;
@@ -37,23 +38,20 @@ public class NewsService {
     }
     public SeparatedNewsResponse getAll(String userId) {
         List<News> newsDatas = newsRepository.findTop20ByOrderByCreatedAtDesc();
-
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Long lastSeenNewsId = user.getLastSeenNewsId();
 
-        List<NewsResponse> newsResponses = newsDatas.stream()
-                .map(NewsResponse::new)
-                .toList();
-
-        List<NewsResponse> readNews = newsResponses.stream()
-                .filter(newsResponse -> newsResponse.getNewsId() <= lastSeenNewsId)
-                .collect(Collectors.toList());
-        List<NewsResponse> unreadNews = newsResponses.stream()
-                .filter(newsResponse -> newsResponse.getNewsId() > lastSeenNewsId)
-                .collect(Collectors.toList());
-
+        List<NewsResponse> newsResponses = newsDatas.stream().map(NewsResponse::new).toList();
+        List<NewsResponse> readNews = filterNewsByReadStatus(newsResponses, lastSeenNewsId,true);
+        List<NewsResponse> unreadNews = filterNewsByReadStatus(newsResponses, lastSeenNewsId,false);
         updateLastSeenNewsId(user, newsDatas);
         return new SeparatedNewsResponse(readNews, unreadNews);
+    }
+
+    private List<NewsResponse>  filterNewsByReadStatus(List<NewsResponse> newsResponses, Long lastSeenNewsId, Boolean isGetReadAlert) {
+        return newsResponses.stream()
+                .filter(newsResponse -> isGetReadAlert ? newsResponse.getNewsId() <= lastSeenNewsId : newsResponse.getNewsId() > lastSeenNewsId)
+                .collect(Collectors.toList());
     }
 
     private void updateLastSeenNewsId(User user, List<News> newsDatas) {

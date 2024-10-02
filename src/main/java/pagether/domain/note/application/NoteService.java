@@ -1,6 +1,8 @@
 package pagether.domain.note.application;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,14 +11,10 @@ import pagether.domain.alert.domain.AlertType;
 import pagether.domain.book.domain.Book;
 import pagether.domain.book.exception.BookNotFoundException;
 import pagether.domain.book.repository.BookRepository;
+import pagether.domain.heart.application.HeartService;
+import pagether.domain.heart.domain.Heart;
 import pagether.domain.heart.repository.HeartRepository;
 import pagether.domain.image.application.ImageService;
-import pagether.domain.news.domain.News;
-import pagether.domain.news.dto.req.AddNewsRequest;
-import pagether.domain.news.dto.res.NewsResponse;
-import pagether.domain.news.dto.res.SeparatedNewsResponse;
-import pagether.domain.news.exception.NewsNotFoundException;
-import pagether.domain.news.repository.NewsRepository;
 import pagether.domain.note.domain.Note;
 import pagether.domain.note.domain.NoteType;
 import pagether.domain.note.dto.CommentDTO;
@@ -32,6 +30,7 @@ import pagether.domain.readInfo.domain.ReadInfo;
 import pagether.domain.readInfo.domain.ReadStatus;
 import pagether.domain.readInfo.exception.ReadInfoNotFountException;
 import pagether.domain.readInfo.repository.ReadInfoRepository;
+import pagether.domain.user.application.UserService;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
@@ -40,7 +39,6 @@ import pagether.global.config.exception.UnauthorizedAccessException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,27 +52,24 @@ public class NoteService {
     private final ReadInfoRepository readInfoRepository;
     private final AlertService alertService;
     private final ImageService imageService;
+    private final UserService userService;
 
     public NoteResponse save(AddNoteRequest request, String userId,  MultipartFile pic) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Book book = bookRepository.findByIsbn(request.getIsbn()).orElseThrow(BookNotFoundException::new);
         ReadInfo lastReadInfo = readInfoRepository.findByBookAndUserAndIsLatest(book, user, true).orElseThrow(ReadInfoNotFountException::new);
-        String imgName = null;
-        if (pic != null) {
-            imgName = imageService.save(pic);
-        }
-        if (request.getType().equals(NoteType.REVIEW)){
-            if (!(lastReadInfo.getReadStatus().equals(ReadStatus.READ) || lastReadInfo.getReadStatus().equals(ReadStatus.STOPPED))){
-                throw new ReviewNotAllowedException();
-            }
-            if (lastReadInfo.getHasReview()){
-                throw new ReviewNotAllowedException();
-            }
-        }
+
         Note discussion = null;
-        if (request.getType().equals(NoteType.COMMENT)){
+        if (request.getType().equals(NoteType.REVIEW)){
+            if (!(lastReadInfo.getReadStatus().equals(ReadStatus.READ) || lastReadInfo.getReadStatus().equals(ReadStatus.STOPPED)))
+                throw new ReviewNotAllowedException();
+            if (lastReadInfo.getHasReview())
+                throw new ReviewNotAllowedException();
+        } else if (request.getType().equals(NoteType.COMMENT)){
             discussion = noteRepository.findById(request.getDiscussionId()).orElseThrow(NoteNotFountException::new);
         }
+
+        String imgName = imageService.save(pic, true);
         Note note = Note.builder()
                 .user(user)
                 .book(book)
@@ -93,16 +88,14 @@ public class NoteService {
                 .createdAt(LocalDateTime.now())
                 .build();
         note = noteRepository.save(note);
-        if (request.getType().equals(NoteType.COMMENT)){
+        if (request.getType().equals(NoteType.COMMENT))
             alertService.createAlert(user, discussion.getUser(), AlertType.COMMENT, discussion);
-        }
         return new NoteResponse(note);
     }
     public void update(UpdateNoteRequest request, Long noteId, String userId) {
         Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
-        if (!note.getUser().getUserId().equals(userId)) {
+        if (!note.getUser().getUserId().equals(userId))
             throw new UnauthorizedAccessException();
-        }
         note.setContent(request.getContent());
         note.setRating(request.getRating());
         note.setTopic(request.getTopic());
@@ -116,11 +109,10 @@ public class NoteService {
     public NoteContentResponse get(Long noteId, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
-        if (note.getUser().getUserId().equals(userId)){
-            Boolean isHeartClicked = heartRepository.existsByNoteAndHeartClicker(note, user);
-            return new NoteContentResponse(note, isHeartClicked);
+        if (!note.getUser().getUserId().equals(userId)){
+            throw new UnauthorizedAccessException();
         }
-        throw new UnauthorizedAccessException();
+        return new NoteContentResponse(note, this.isClicked(note, user));
     }
 
     public List<CommentDTO> getComment(Long discussionId, String userId) {
@@ -128,25 +120,14 @@ public class NoteService {
         Note discussion = noteRepository.findById(discussionId).orElseThrow(NoteNotFountException::new);
         List<Note> comment = noteRepository.findAllByDiscussion(discussion);
         List<CommentDTO> dtos = new ArrayList<>();
-
         for (Note note : comment){
-            Boolean isHeartClicked = heartRepository.existsByNoteAndHeartClicker(note, user);
-            CommentDTO dto = CommentDTO.builder()
-                    .userName(note.getUser().getNickName())
-                    .userProfileImgName(note.getUser().getImgPath())
-                    .noteId(note.getNoteId())
-                    .content(note.getContent())
-                    .isHeartClicked(isHeartClicked)
-                    .heartCount(note.getHeartCount())
-                    .type(note.getType())
-                    .createdAt(LocalDateTime.now())
-                    .build();
+            CommentDTO dto = new CommentDTO(note, this.isClicked(note, user));
             dtos.add(dto);
         }
         return dtos;
     }
 
-    public NoteResponse newBook(User user, Book book) {
+    public NoteResponse createStartNote(User user, Book book) {
         Note note = Note.builder()
                 .user(user)
                 .book(book)
@@ -176,25 +157,7 @@ public class NoteService {
             notes = noteRepository.findAllByUserAndTypeAndIsPrivateOrderByCreatedAtDesc(noteUser, noteType, false);
         }
         for(Note note : notes){
-            Boolean isHeartClicked = heartRepository.existsByNoteAndHeartClicker(note, user);
-            NoteDTO dto = NoteDTO.builder()
-                    .userName(note.getUser().getNickName())
-                    .userProfileImgName(note.getUser().getImgPath())
-                    .noteId(note.getNoteId())
-                    .imgName(note.getImgName())
-                    .hasSpoilerRisk(note.getHasSpoilerRisk())
-                    .content(note.getContent())
-                    .rating(note.getRating())
-                    .sentence(note.getSentence())
-                    .topic(note.getTopic())
-                    .isPrivate(note.getIsPrivate())
-                    .isHeartClicked(isHeartClicked)
-                    .heartCount(note.getHeartCount())
-                    .bookName(note.getBook().getTitle())
-                    .isbn(note.getBook().getIsbn())
-                    .type(note.getType())
-                    .createdAt(LocalDateTime.now())
-                    .build();
+            NoteDTO dto = new NoteDTO(note, this.isClicked(note, user));
             responses.add(dto);
         }
         return responses;
@@ -202,43 +165,53 @@ public class NoteService {
 
     public List<NoteDTO> getNotesByBook(String type, String isbn, String userId) {
         List<NoteDTO> responses = new ArrayList<>();
-
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Book book = bookRepository.findByIsbn(isbn).orElseThrow(BookNotFoundException::new);
         NoteType noteType = NoteType.fromString(type);
         List<Note> notes = noteRepository.findAllByBookAndTypeAndIsPrivateOrderByCreatedAtDesc(book, noteType, false);
-
         for(Note note : notes){
-            Boolean isHeartClicked = heartRepository.existsByNoteAndHeartClicker(note, user);
-            NoteDTO dto = NoteDTO.builder()
-                    .userName(note.getUser().getNickName())
-                    .userProfileImgName(note.getUser().getImgPath())
-                    .noteId(note.getNoteId())
-                    .imgName(note.getImgName())
-                    .content(note.getContent())
-                    .hasSpoilerRisk(note.getHasSpoilerRisk())
-                    .rating(note.getRating())
-                    .sentence(note.getSentence())
-                    .topic(note.getTopic())
-                    .isHeartClicked(isHeartClicked)
-                    .heartCount(note.getHeartCount())
-                    .bookName(note.getBook().getTitle())
-                    .type(note.getType())
-                    .createdAt(LocalDateTime.now())
-                    .build();
+            NoteDTO dto = new NoteDTO(note, this.isClicked(note, user));
             responses.add(dto);
         }
         return responses;
     }
 
+    public List<NoteDTO> getHeartedNotes(String userId) {
+        List<NoteDTO> responses = new ArrayList<>();
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        Pageable pageable = PageRequest.of(0, 5);
+        List<Heart> hearts = heartRepository.findAllByHeartClickerOrderByCreatedAtDesc(user, pageable);
+        for(Heart heart : hearts){
+            Note note = heart.getNote();
+            NoteDTO dto = new NoteDTO(note, true);
+            responses.add(dto);
+        }
+        return responses;
+    }
+
+    public void incrementHeartCount(Note note) {
+        note.incrementHeartCount();
+        noteRepository.save(note);
+    }
+
+    public void decrementHeartCount(Note note) {
+        note.decrementHeartCount();
+        noteRepository.save(note);
+    }
+
+    public Boolean isClicked(Note note, String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        return heartRepository.existsByNoteAndHeartClicker(note, user);
+    }
+
+    public Boolean isClicked(Note note, User user) {
+        return heartRepository.existsByNoteAndHeartClicker(note, user);
+    }
+
+
     public void delete(Long noteId, String userId) {
         Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
-        if (!noteRepository.existsById(noteId)) {
-            throw new NoteNotFountException();
-        }
-        if (!note.getUser().getUserId().equals(userId)) {
-            throw new UnauthorizedAccessException();
-        }
+        userService.validateOwnership(note.getUser().getUserId(),userId);
         noteRepository.deleteById(noteId);
     }
 }

@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 public class HeartResponse {
     private Long heartId;
     private LocalDateTime createdAt;
 
-    @Builder
     public HeartResponse(Heart heart) {
         heartId = heart.getHeartId();
         createdAt = heart.getCreatedAt();

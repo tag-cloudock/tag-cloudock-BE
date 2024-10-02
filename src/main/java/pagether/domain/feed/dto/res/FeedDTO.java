@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 public class FeedDTO {
     private Long id;
     private FeedType type;
@@ -26,7 +27,6 @@ public class FeedDTO {
     private Boolean isHeartClicked;
     private String isbn;
 
-    @Builder
     public FeedDTO(Note note, Long heartCount, Boolean isHeartClicked) {
         id = note.getNoteId();
         userId = note.getUser().getUserId();

@@ -26,6 +26,27 @@ public class NoteDTO {
     private Boolean isHeartClicked;
     private NoteType type;
     private String bookName;
+    private String bookCoverImgName;
     private String isbn;
     private LocalDateTime createdAt;
+
+    public NoteDTO(Note note, Boolean isHeartClicked) {
+        noteId = note.getNoteId();
+        isbn = note.getBook().getIsbn();
+        bookName = note.getBook().getTitle();
+        bookCoverImgName = note.getBook().getCoverImgName();
+        imgName = note.getImgName();
+        userName = note.getUser().getNickName();
+        userProfileImgName = note.getUser().getImgPath();
+        type = note.getType();
+        content = note.getContent();
+        rating = note.getRating();
+        topic = note.getTopic();
+        sentence = note.getSentence();
+        hasSpoilerRisk = note.getHasSpoilerRisk();
+        isPrivate = note.getIsPrivate();
+        this.isHeartClicked = isHeartClicked;
+        heartCount = note.getHeartCount();
+        createdAt = LocalDateTime.now();
+    }
 }
