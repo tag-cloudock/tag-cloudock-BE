@@ -6,15 +6,15 @@ spring:
       ddl-auto: update
     open-in-view: false
   datasource:
-    url: jdbc:mysql://43.202.228.198:3306/pagether
-    username: root
-    password: tkrhk0123!!
+    url: jdbc:mysql://pagether-db.c3yy4ym66xc0.ap-northeast-2.rds.amazonaws.com:3306/pagether
+    username: admin
+    password: vpdlwlej0123!!
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
       host: localhost
       port: 6379
-      password: 20010203
+      password: vpdlwlej5132
   servlet:
     multipart:
       enabled: true
