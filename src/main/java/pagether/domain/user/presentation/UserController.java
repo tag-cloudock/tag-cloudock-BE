@@ -4,6 +4,7 @@ import pagether.domain.oauth.dto.req.KakaoSignUpRequest;
 import pagether.domain.report.dto.req.AddReportRequest;
 import pagether.domain.user.application.UserService;
 import pagether.domain.user.dto.req.*;
+import pagether.domain.user.dto.res.TokensResponse;
 import pagether.domain.user.dto.res.UserInfoResponse;
 import pagether.domain.user.dto.res.UserResponse;
 import pagether.global.config.dto.ResponseDto;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import pagether.global.config.security.JwtProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,13 @@ import static org.springframework.http.HttpStatus.OK;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final JwtProvider jwtProvider;
+
+    @PostMapping("/refresh")
+    public ResponseDto<TokensResponse> refreshAccessToken(@RequestBody String refreshToken) {
+        TokensResponse response = jwtProvider.refreshTokens(refreshToken);
+        return ResponseDto.of(OK.value(), SUCCESS_REFRESH.getMessage(), response);
+    }
 
     @PostMapping(value = "/guest")
     public ResponseDto<UserResponse> guestSignUp(@RequestBody GuestSignUpRequest request) {

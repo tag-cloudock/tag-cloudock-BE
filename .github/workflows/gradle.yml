@@ -59,7 +59,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           ssh -o StrictHostKeyChecking=no -i pagether.pem ubuntu@${{ secrets.AWS_EC2_IP }} << 'EOF'
-          sudo mkdir -p ~/test
           sudo systemctl start docker
           sudo usermod -aG docker ubuntu
           sudo docker stop spring 2>/dev/null || true

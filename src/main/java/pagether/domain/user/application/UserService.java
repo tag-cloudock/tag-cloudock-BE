@@ -75,7 +75,8 @@ public class UserService {
                 .userId(user.getUserId())
                 .nickname(user.getNickName())
                 .roles(user.getRole())
-                .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
+                .accessToken(jwtProvider.createAccessToken(user.getUserId(), user.getRole()))
+                .refreshToken(jwtProvider.createRefreshToken(user.getUserId()))
                 .build();
         return signResponse;
     }
@@ -110,7 +111,8 @@ public class UserService {
                 .userId(user.getUserId())
                 .nickname(user.getNickName())
                 .roles(user.getRole())
-                .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
+                .accessToken(jwtProvider.createAccessToken(user.getUserId(), user.getRole()))
+                .refreshToken(jwtProvider.createRefreshToken(user.getUserId()))
                 .build();
         return signResponse;
     }
@@ -138,7 +140,7 @@ public class UserService {
                 .userId(user.getUserId())
                 .nickname(user.getNickName())
                 .roles(user.getRole())
-                .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
+                .accessToken(jwtProvider.createAccessToken(user.getUserId(), user.getRole()))
                 .build();
         return signResponse;
     }
@@ -174,7 +176,7 @@ public class UserService {
                 .userId(user.getUserId())
                 .nickname(user.getNickName())
                 .roles(user.getRole())
-                .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
+                .accessToken(jwtProvider.createAccessToken(user.getUserId(), user.getRole()))
                 .build();
         return signResponse;
     }
@@ -214,7 +216,7 @@ public class UserService {
                 .userId(user.getUserId())
                 .nickname(user.getNickName())
                 .roles(user.getRole())
-                .token(jwtProvider.createToken(user.getUserId(), user.getRole()))
+                .accessToken(jwtProvider.createAccessToken(user.getUserId(), user.getRole()))
                 .build();
         return signResponse;
     }

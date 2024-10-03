@@ -1,6 +1,7 @@
 package pagether.global.config.security;
 
 import pagether.domain.user.domain.Role;
+import pagether.domain.user.dto.res.TokensResponse;
 import pagether.global.config.security.exception.ExpiredTokenException;
 import pagether.global.config.security.exception.InvalidTokenException;
 import io.jsonwebtoken.*;
@@ -21,7 +22,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-
 @RequiredArgsConstructor
 @Component
 public class JwtProvider {
@@ -31,7 +31,8 @@ public class JwtProvider {
 
     private Key secretKey;
 
-    private final long exp = 48000L * 60 * 60;
+    private static final long ACCESS_TOKEN_EXPIRATION = 60 * 60 * 1000;
+    private static final long REFRESH_TOKEN_EXPIRATION = 30 * 24 * 60 * 60 * 1000;
 
     private static final String ROLE_KEY = "role";
 
@@ -40,10 +41,9 @@ public class JwtProvider {
         secretKey = Keys.hmacShaKeyFor(salt.getBytes(StandardCharsets.UTF_8));
     }
 
-    // 토큰 생성
-    public String createToken(String userid, Role roles) {
+    public String createAccessToken(String userid, Role roles) {
         Date now = new Date();
-        Date expireDate = new Date(now.getTime() + exp);
+        Date expireDate = new Date(now.getTime() + ACCESS_TOKEN_EXPIRATION);
         return Jwts.builder()
                 .setSubject(userid)
                 .claim(ROLE_KEY, roles.getRole())
@@ -52,6 +52,23 @@ public class JwtProvider {
                 .compact();
     }
 
+    public String createRefreshToken(String userid) {
+        Date now = new Date();
+        Date expireDate = new Date(now.getTime() + REFRESH_TOKEN_EXPIRATION);
+        return Jwts.builder()
+                .setSubject(userid)
+                .setExpiration(expireDate)
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
+    }
+
+    public TokensResponse refreshTokens(String refreshToken) {
+        validateToken(refreshToken);
+        String userId = getEmail(refreshToken);
+        String newAccessToken = createAccessToken(userId, Role.USER);
+        String newRefreshToken = createRefreshToken(userId);
+        return new TokensResponse(newAccessToken, newRefreshToken);
+    }
 
     public Authentication getAuthentication(String token) {
         return new PreAuthenticatedAuthenticationToken(this.getEmail(token), null, this.getRole(token));
@@ -66,9 +83,9 @@ public class JwtProvider {
     }
 
     private Collection<? extends GrantedAuthority> convertToGrantedAuthorities(String role) {
-        List<GrantedAuthority> authoritie = new ArrayList<>();
-        authoritie.add(new SimpleGrantedAuthority(role));
-        return authoritie;
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(role));
+        return authorities;
     }
 
     public void validateToken(String token) {
@@ -81,10 +98,11 @@ public class JwtProvider {
         }
     }
 
-    public Claims parseClaims(String accessToken) {
+
+    public Claims parseClaims(String token) {
         try {
             JwtParser parser = Jwts.parser().setSigningKey(secretKey);
-            return parser.parseClaimsJws(accessToken).getBody();
+            return parser.parseClaimsJws(token).getBody();
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }

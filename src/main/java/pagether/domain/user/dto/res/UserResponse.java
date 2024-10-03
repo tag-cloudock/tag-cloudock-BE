@@ -18,7 +18,8 @@ public class UserResponse {
     private String nickname;
     private String imgPath;
     private Role roles;
-    private String token;
+    private String accessToken;
+    private String refreshToken;
 
 
     public UserResponse(User user) {
