@@ -1,5 +1,6 @@
 package pagether.domain.alert.repository;
 
+import org.springframework.data.domain.Pageable;
 import pagether.domain.alert.domain.Alert;
 import pagether.domain.alert.domain.AlertType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,6 @@ import java.util.List;
 @Repository
 @Transactional
 public interface AlertRepository extends JpaRepository<Alert, Long> {
-    List<Alert> findAllByAlarmReceiverAndAlertTypeAndCreatedAtAfterOrderByCreatedAtDesc(User alarmReceiver, AlertType alertType, LocalDateTime createdAt);
-    List<Alert> findAllByAlarmReceiverAndAlertTypeNotAndCreatedAtAfterOrderByCreatedAtDesc(User alarmReceiver, AlertType alertType, LocalDateTime createdAt);
+    List<Alert> findAllByAlarmReceiverAndAlertTypeAndAlertIdLessThanOrderByAlertIdDesc(User alarmReceiver, AlertType alertType, Long cursor, Pageable pageable);
+    List<Alert> findAllByAlarmReceiverAndAlertTypeNotAndAlertIdLessThanOrderByAlertIdDesc(User alarmReceiver, AlertType alertType, Long cursor, Pageable pageable);
 }

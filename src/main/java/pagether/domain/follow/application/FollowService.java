@@ -1,6 +1,8 @@
 package pagether.domain.follow.application;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,6 +10,7 @@ import pagether.domain.alert.application.AlertService;
 import pagether.domain.alert.domain.AlertType;
 import pagether.domain.follow.domain.Follow;
 import pagether.domain.follow.domain.RequestStatus;
+import pagether.domain.follow.dto.FollowDTO;
 import pagether.domain.follow.dto.req.AddFollowRequest;
 import pagether.domain.follow.dto.res.FollowCountResponse;
 import pagether.domain.follow.dto.res.FollowListResponse;
@@ -19,8 +22,10 @@ import pagether.domain.follow.repository.FollowRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.LastPageReachedException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,6 +37,7 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final AlertService alertService;
+    public static final int PAGE_SIZE = 10;
 
     public FollowResponse save(AddFollowRequest request, String userId) {
         if (request.getFolloweeId().equals(userId))
@@ -64,11 +70,30 @@ public class FollowService {
         return new FollowCountResponse(FolloweeCount, FollowerCount);
     }
 
-    public FollowListResponse getUsers(String userId) {
+    public FollowListResponse getFollowingList(String userId, Long cursor) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        List<Follow> followerList = followRepository.findAllByFolloweeAndRequestStatus(user, RequestStatus.ACCEPTED);
-        List<Follow> followeeList = followRepository.findAllByFollowerAndRequestStatus(user, RequestStatus.ACCEPTED);
-        return new FollowListResponse(followeeList, followerList);
+        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
+        List<Follow> followingList = followRepository.findAllByFollowerAndRequestStatusAndFollowIdLessThan(user, RequestStatus.ACCEPTED, cursor, pageable);
+        if (followingList.isEmpty())
+            throw new LastPageReachedException();
+
+        List<FollowDTO> dtos = new ArrayList<>();
+        for (Follow follow : followingList)
+            dtos.add(new FollowDTO(follow, follow.getFollowee()));
+        return new FollowListResponse(dtos, followingList.get(followingList.size()-1).getFollowId());
+    }
+
+    public FollowListResponse getFollowerList(String userId, Long cursor) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
+        List<Follow> followerList = followRepository.findAllByFolloweeAndRequestStatusAndFollowIdLessThan(user, RequestStatus.ACCEPTED, cursor, pageable);
+        if (followerList.isEmpty())
+            throw new LastPageReachedException();
+
+        List<FollowDTO> dtos = new ArrayList<>();
+        for (Follow follow : followerList)
+            dtos.add(new FollowDTO(follow, follow.getFollower()));
+        return new FollowListResponse(dtos, followerList.get(followerList.size()-1).getFollowId());
     }
 
     public Boolean isFollowed(User followee, User follower) {

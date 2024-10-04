@@ -1,11 +1,11 @@
 package pagether.domain.news.application;
 
-import org.springframework.scheduling.annotation.EnableAsync;
-import pagether.domain.alert.dto.res.AlertResponse;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import pagether.domain.news.domain.News;
 import pagether.domain.news.dto.req.AddNewsRequest;
 import pagether.domain.news.dto.res.NewsResponse;
-import pagether.domain.news.dto.res.SeparatedNewsResponse;
+import pagether.domain.news.dto.res.NewsResponses;
 import pagether.domain.news.exception.NewsNotFoundException;
 import pagether.domain.news.repository.NewsRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,6 @@ import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +26,7 @@ public class NewsService {
 
     private final NewsRepository newsRepository;
     private final UserRepository userRepository;
+    public static final int PAGE_SIZE = 10;
 
     public NewsResponse save(AddNewsRequest request) {
         News news = News.builder()
@@ -36,8 +36,9 @@ public class NewsService {
         news = newsRepository.save(news);
         return new NewsResponse(news);
     }
-    public SeparatedNewsResponse getAll(String userId) {
-        List<News> newsDatas = newsRepository.findTop20ByOrderByCreatedAtDesc();
+    public NewsResponses getAll(String userId, Long cursor) {
+        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
+        List<News> newsDatas = newsRepository.findAllByNewsIdLessThanOrderByNewsIdDesc(cursor, pageable);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Long lastSeenNewsId = user.getLastSeenNewsId();
 
@@ -45,7 +46,7 @@ public class NewsService {
         List<NewsResponse> readNews = filterNewsByReadStatus(newsResponses, lastSeenNewsId,true);
         List<NewsResponse> unreadNews = filterNewsByReadStatus(newsResponses, lastSeenNewsId,false);
         updateLastSeenNewsId(user, newsDatas);
-        return new SeparatedNewsResponse(readNews, unreadNews);
+        return new NewsResponses(readNews, unreadNews, newsDatas.get(newsDatas.size()-1).getNewsId());
     }
 
     private List<NewsResponse>  filterNewsByReadStatus(List<NewsResponse> newsResponses, Long lastSeenNewsId, Boolean isGetReadAlert) {

@@ -11,6 +11,7 @@ import pagether.domain.note.dto.req.AddNoteRequest;
 import pagether.domain.note.dto.req.UpdateNoteRequest;
 import pagether.domain.note.dto.res.NoteContentResponse;
 import pagether.domain.note.dto.res.NoteResponse;
+import pagether.domain.note.dto.res.NotesResponse;
 import pagether.global.config.dto.ResponseDto;
 import org.springframework.security.core.Authentication;
 
@@ -49,20 +50,20 @@ public class NoteApiController {
     }
 
     @GetMapping("/by-user")
-    public ResponseDto<List<NoteDTO>> getNotesByUser(@RequestParam String type, @RequestParam String userId, Authentication authentication) {
-        List<NoteDTO> response = noteService.getNotesByUser(type, userId, authentication.getName());
+    public ResponseDto<NotesResponse> getNotesByUser(@RequestParam String type, @RequestParam Long cursor, @RequestParam String userId, Authentication authentication) {
+        NotesResponse response = noteService.getNotesByUser(type, userId, cursor, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 
     @GetMapping("/by-book")
-    public ResponseDto<List<NoteDTO>> getNotesByBook(@RequestParam String type, @RequestParam String isbn, Authentication authentication) {
-        List<NoteDTO> response = noteService.getNotesByBook(type, isbn, authentication.getName());
+    public ResponseDto<NotesResponse> getNotesByBook(@RequestParam String type, @RequestParam String isbn, @RequestParam Long cursor, Authentication authentication) {
+        NotesResponse response = noteService.getNotesByBook(type, isbn, cursor, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 
     @GetMapping("/hearted")
-    public ResponseDto<List<NoteDTO>> getHeartedNotes(@RequestParam String userId) {
-        List<NoteDTO> response = noteService.getHeartedNotes(userId);
+    public ResponseDto<NotesResponse> getHeartedNotes(@RequestParam String userId, @RequestParam Long cursor) {
+        NotesResponse response = noteService.getHeartedNotes(userId, cursor);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 

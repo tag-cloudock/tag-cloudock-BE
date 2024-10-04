@@ -23,11 +23,18 @@ public class FollowApiController {
         FollowResponse response = followService.save(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
-    @GetMapping("/list")
-    public ResponseDto<FollowListResponse> getList(Authentication authentication) {
-        FollowListResponse response = followService.getUsers(authentication.getName());
+    @GetMapping("/followings")
+    public ResponseDto<FollowListResponse> getFollowingList(Authentication authentication, Long cursor) {
+        FollowListResponse response = followService.getFollowingList(authentication.getName(), cursor);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
+
+    @GetMapping("/followers")
+    public ResponseDto<FollowListResponse> getFollowerList(Authentication authentication, Long cursor) {
+        FollowListResponse response = followService.getFollowerList(authentication.getName(), cursor);
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
+    }
+
     @GetMapping("/count")
     public ResponseDto<FollowCountResponse> getCount(Authentication authentication) {
         FollowCountResponse response = followService.getCount(authentication.getName());

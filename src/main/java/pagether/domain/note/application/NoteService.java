@@ -23,6 +23,7 @@ import pagether.domain.note.dto.req.AddNoteRequest;
 import pagether.domain.note.dto.req.UpdateNoteRequest;
 import pagether.domain.note.dto.res.NoteContentResponse;
 import pagether.domain.note.dto.res.NoteResponse;
+import pagether.domain.note.dto.res.NotesResponse;
 import pagether.domain.note.exception.NoteNotFountException;
 import pagether.domain.note.exception.ReviewNotAllowedException;
 import pagether.domain.note.repository.NoteRepository;
@@ -34,6 +35,7 @@ import pagether.domain.user.application.UserService;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.LastPageReachedException;
 import pagether.global.config.exception.UnauthorizedAccessException;
 
 import java.time.LocalDateTime;
@@ -53,6 +55,8 @@ public class NoteService {
     private final AlertService alertService;
     private final ImageService imageService;
     private final UserService userService;
+
+    public static final int PAGE_SIZE = 10;
 
     public NoteResponse save(AddNoteRequest request, String userId,  MultipartFile pic) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
@@ -145,48 +149,56 @@ public class NoteService {
         return new NoteResponse(note);
     }
 
-    public List<NoteDTO> getNotesByUser(String type, String noteUserId, String userId) {
-        List<NoteDTO> responses = new ArrayList<>();
+    public NotesResponse getNotesByUser(String type, String noteUserId, Long cursor, String userId) {
+        List<NoteDTO> notesResponse = new ArrayList<>();
         User noteUser = userRepository.findByUserId(noteUserId).orElseThrow(UserNotFountException::new);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         NoteType noteType = NoteType.fromString(type);
         List<Note> notes;
+        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
         if (noteUserId.equals(userId)){
-            notes = noteRepository.findAllByUserAndTypeOrderByCreatedAtDesc(noteUser, noteType);
+            notes = noteRepository.findAllByUserAndTypeAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, cursor, pageable);
         }else {
-            notes = noteRepository.findAllByUserAndTypeAndIsPrivateOrderByCreatedAtDesc(noteUser, noteType, false);
+            notes = noteRepository.findAllByUserAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, false,cursor, pageable);
         }
+        if (notes.isEmpty())
+            throw new LastPageReachedException();
         for(Note note : notes){
             NoteDTO dto = new NoteDTO(note, this.isClicked(note, user));
-            responses.add(dto);
+            notesResponse.add(dto);
         }
-        return responses;
+        return new NotesResponse(notesResponse, notes.get(notes.size()-1).getNoteId());
     }
 
-    public List<NoteDTO> getNotesByBook(String type, String isbn, String userId) {
-        List<NoteDTO> responses = new ArrayList<>();
+    public NotesResponse getNotesByBook(String type, String isbn, Long cursor, String userId) {
+        List<NoteDTO> notesResponse = new ArrayList<>();
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Book book = bookRepository.findByIsbn(isbn).orElseThrow(BookNotFoundException::new);
         NoteType noteType = NoteType.fromString(type);
-        List<Note> notes = noteRepository.findAllByBookAndTypeAndIsPrivateOrderByCreatedAtDesc(book, noteType, false);
+        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
+        List<Note> notes = noteRepository.findAllByBookAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(book, noteType, false, cursor, pageable);
+        if (notes.isEmpty())
+            throw new LastPageReachedException();
         for(Note note : notes){
             NoteDTO dto = new NoteDTO(note, this.isClicked(note, user));
-            responses.add(dto);
+            notesResponse.add(dto);
         }
-        return responses;
+        return new NotesResponse(notesResponse, notes.get(notes.size()-1).getNoteId());
     }
 
-    public List<NoteDTO> getHeartedNotes(String userId) {
-        List<NoteDTO> responses = new ArrayList<>();
+    public NotesResponse getHeartedNotes(String userId, Long cursor) {
+        List<NoteDTO> notesResponse = new ArrayList<>();
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        Pageable pageable = PageRequest.of(0, 5);
-        List<Heart> hearts = heartRepository.findAllByHeartClickerOrderByCreatedAtDesc(user, pageable);
+        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
+        List<Heart> hearts = heartRepository.findAllByHeartClickerAndHeartIdLessThanOrderByHeartIdDesc(user, cursor, pageable);
+        if (hearts.isEmpty())
+            throw new LastPageReachedException();
         for(Heart heart : hearts){
             Note note = heart.getNote();
             NoteDTO dto = new NoteDTO(note, true);
-            responses.add(dto);
+            notesResponse.add(dto);
         }
-        return responses;
+        return new NotesResponse(notesResponse, hearts.get(hearts.size()-1).getHeartId());
     }
 
     public void incrementHeartCount(Note note) {

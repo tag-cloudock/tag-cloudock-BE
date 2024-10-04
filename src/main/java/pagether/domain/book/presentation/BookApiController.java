@@ -35,8 +35,8 @@ public class BookApiController {
     }
 
     @GetMapping("/search")
-    public ResponseDto<List<BookSearchResponse>> search(@RequestParam String keyword) {
-        List<BookSearchResponse> responses = bookService.searchFromAladin(keyword);
+    public ResponseDto<List<BookSearchResponse>> search(@RequestParam String keyword, @RequestParam Long page) {
+        List<BookSearchResponse> responses = bookService.searchFromAladin(keyword, page);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), responses);
     }
 }

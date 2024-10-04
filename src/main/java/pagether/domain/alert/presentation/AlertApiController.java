@@ -2,7 +2,7 @@ package pagether.domain.alert.presentation;
 
 import org.springframework.security.core.Authentication;
 import pagether.domain.alert.application.AlertService;
-import pagether.domain.alert.dto.res.SeparatedAlertResponse;
+import pagether.domain.alert.dto.res.AlertResponses;
 import pagether.global.config.dto.ResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +17,15 @@ public class AlertApiController {
 
     private final AlertService alertService;
 
+    @GetMapping("/request")
+    public ResponseDto<AlertResponses> getAllRequestAlertsByUser(@RequestParam Long cursor, Authentication authentication) {
+        AlertResponses response = alertService.getAllRequestAlertsByUser(authentication.getName(), cursor);
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
+    }
+
     @GetMapping
-    public ResponseDto<SeparatedAlertResponse> getAllByUser(Authentication authentication) {
-        SeparatedAlertResponse response = alertService.getAllByUser(authentication.getName());
+    public ResponseDto<AlertResponses> getAllAlertsByUser(@RequestParam Long cursor, Authentication authentication) {
+        AlertResponses response = alertService.getAllAlertsByUser(authentication.getName(), cursor);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 

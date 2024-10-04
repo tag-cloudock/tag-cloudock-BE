@@ -46,11 +46,11 @@ public class FeedService {
 
         for (Follow follow : followedUsers) {
             User followee = follow.getFollowee();
-            List<Note> notes = noteRepository.findAllByUserAndCreatedAtAfterOrderByCreatedAtDesc(followee, afterDate);
+            List<Note> notes = noteRepository.findAllByUserAndCreatedAtAfterOrderByNoteIdDesc(followee, afterDate);
             for (Note note : notes)
                 feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isClicked(note, user)));
         }
-        feeds.sort(Comparator.comparing(FeedDTO::getCreatedAt).reversed());
+        feeds.sort(Comparator.comparing(FeedDTO::getId).reversed());
         return feeds;
     }
 
@@ -62,7 +62,7 @@ public class FeedService {
         List<Note> notes = noteRepository.findAllByCreatedAtAfterOrderByHeartCountDesc(afterDate);
         for (Note note : notes)
             feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isClicked(note, user)));
-        feeds.sort(Comparator.comparing(FeedDTO::getCreatedAt).reversed());
+        feeds.sort(Comparator.comparing(FeedDTO::getId).reversed());
         return feeds;
     }
 

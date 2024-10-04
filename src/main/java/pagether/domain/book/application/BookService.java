@@ -6,17 +6,12 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import pagether.domain.book.domain.Book;
-import pagether.domain.book.dto.BookSaveDTO;
 import pagether.domain.book.dto.req.AddBookRequest;
 import pagether.domain.book.dto.res.BookDetailResponse;
 import pagether.domain.book.dto.res.BookResponse;
@@ -26,30 +21,12 @@ import pagether.domain.book.repository.BookRepository;
 import pagether.domain.category.domain.Category;
 import pagether.domain.category.exception.CategoryNotFoundException;
 import pagether.domain.category.repository.CategoryRepository;
-import pagether.domain.follow.dto.req.AddFollowRequest;
-import pagether.domain.follow.dto.res.FollowResponse;
-import pagether.domain.follow.presentation.constant.ResponseMessage;
 import pagether.domain.image.application.ImageService;
-import pagether.domain.news.domain.News;
-import pagether.domain.news.dto.req.AddNewsRequest;
-import pagether.domain.news.dto.res.NewsResponse;
-import pagether.domain.news.dto.res.SeparatedNewsResponse;
-import pagether.domain.news.exception.NewsNotFoundException;
-import pagether.domain.news.repository.NewsRepository;
-import pagether.domain.user.domain.User;
-import pagether.domain.user.exception.UserNotFountException;
-import pagether.domain.user.repository.UserRepository;
-import pagether.global.config.dto.ResponseDto;
 
-import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
-import static org.springframework.http.HttpStatus.OK;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +39,7 @@ public class BookService {
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
     private final ImageService imageService;
+    public static final int PAGE_SIZE = 10;
 
     public BookResponse save(AddBookRequest request, MultipartFile pic) {
         Category category = categoryRepository.findById(1L).orElseThrow(CategoryNotFoundException::new);
@@ -109,18 +87,18 @@ public class BookService {
     }
 
     private String makeSearchUrl(String keyword, Long page){
-        return "http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey="+TTB_KEY+"&Query="+keyword+"&QueryType=Title&MaxResults=10&start="+page+"&SearchTarget=Book&output=js&Version=20131101";
+        return "http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey="+TTB_KEY+"&Query="+keyword+"&QueryType=Title&MaxResults="+PAGE_SIZE+"&start="+page+"&SearchTarget=Book&output=js&Version=20131101";
     }
 
     private String makeLookUpUrl(String isbn){
         return "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey="+TTB_KEY+"&itemIdType=ISBN&ItemId="+isbn+"&output=js&Version=20131101&OptResult=packing";
     }
 
-    public List<BookSearchResponse> searchFromAladin(String keyword) {
+    public List<BookSearchResponse> searchFromAladin(String keyword, Long page) {
         List<BookSearchResponse> responses = new ArrayList<>();
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<?> entity = new HttpEntity<>(new HttpHeaders());
-        ResponseEntity<Map> resultMap = restTemplate.exchange(makeSearchUrl(keyword, 1L), HttpMethod.GET, entity, Map.class);
+        ResponseEntity<Map> resultMap = restTemplate.exchange(makeSearchUrl(keyword, page), HttpMethod.GET, entity, Map.class);
         Map<String, Object> body = resultMap.getBody();
         if (body != null)
             return responses;

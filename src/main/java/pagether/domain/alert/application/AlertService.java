@@ -1,5 +1,7 @@
 package pagether.domain.alert.application;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableAsync;
 import pagether.domain.alert.domain.Alert;
 import pagether.domain.alert.domain.AlertType;
@@ -7,7 +9,7 @@ import pagether.domain.alert.dto.res.AlertResponse;
 import pagether.domain.alert.dto.res.RequestAlertResponse;
 import pagether.domain.alert.exception.AlertNotFoundException;
 import pagether.domain.alert.repository.AlertRepository;
-import pagether.domain.alert.dto.res.SeparatedAlertResponse;
+import pagether.domain.alert.dto.res.AlertResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,7 @@ import pagether.domain.note.domain.Note;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.LastPageReachedException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +32,7 @@ public class AlertService {
 
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
+    public static final int PAGE_SIZE = 10;
 
     public AlertResponse createAlert(User alarmSender, User alarmReceiver, AlertType alertType, Note note) {
         Alert alert = Alert.builder()
@@ -54,21 +58,28 @@ public class AlertService {
         return new AlertResponse(alert);
     }
 
-    public SeparatedAlertResponse getAllByUser(String userId) {
+    public AlertResponses getAllRequestAlertsByUser(String userId, Long cursor) {
+        User alarmReceiver = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
+        List<Alert> requestAlerts = alertRepository.findAllByAlarmReceiverAndAlertTypeAndAlertIdLessThanOrderByAlertIdDesc(alarmReceiver, AlertType.FOLLOW_REQUEST, cursor, pageable);
+        if (requestAlerts.isEmpty())
+            throw new LastPageReachedException();
+        List<RequestAlertResponse> requestAlertResponses = requestAlerts.stream().map(RequestAlertResponse::new).toList();
+        return new AlertResponses(requestAlertResponses, requestAlerts.get(requestAlerts.size()-1).getAlertId());
+    }
+
+    public AlertResponses getAllAlertsByUser(String userId, Long cursor) {
         User alarmReceiver = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Long lastSeenAlertId = alarmReceiver.getLastSeenAlertId();
-        LocalDateTime weeksAgo = LocalDateTime.now().minusWeeks(2);
-
-        List<Alert> alerts = alertRepository.findAllByAlarmReceiverAndAlertTypeNotAndCreatedAtAfterOrderByCreatedAtDesc(alarmReceiver, AlertType.FOLLOW_REQUEST, weeksAgo);
-        List<Alert> requestAlerts = alertRepository.findAllByAlarmReceiverAndAlertTypeAndCreatedAtAfterOrderByCreatedAtDesc(alarmReceiver, AlertType.FOLLOW_REQUEST, weeksAgo);
-
-        List<RequestAlertResponse> requestAlertResponses = requestAlerts.stream().map(RequestAlertResponse::new).toList();
+        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
+        List<Alert> alerts = alertRepository.findAllByAlarmReceiverAndAlertTypeNotAndAlertIdLessThanOrderByAlertIdDesc(alarmReceiver, AlertType.FOLLOW_REQUEST, cursor, pageable);
+        if (alerts.isEmpty())
+            throw new LastPageReachedException();
         List<AlertResponse> alertResponses = alerts.stream().map(AlertResponse::new).toList();
-
         List<AlertResponse> readAlert = filterAlertsByReadStatus(alertResponses, lastSeenAlertId, true);
         List<AlertResponse> unreadAlert = filterAlertsByReadStatus(alertResponses, lastSeenAlertId, false);
         updateLastSeenAlertId(alarmReceiver, alerts);
-        return new SeparatedAlertResponse(requestAlertResponses, readAlert, unreadAlert);
+        return new AlertResponses(readAlert, unreadAlert, alerts.get(alerts.size()-1).getAlertId());
     }
 
     private List<AlertResponse> filterAlertsByReadStatus(List<AlertResponse> alertResponses, Long lastSeenAlertId, Boolean isGetReadAlert) {

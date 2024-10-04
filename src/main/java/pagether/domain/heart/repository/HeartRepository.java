@@ -19,5 +19,5 @@ public interface HeartRepository extends JpaRepository<Heart, Long> {
     Boolean existsByNoteAndHeartClicker(Note note, User heartClicker);
     Optional<Heart> findByNoteAndHeartClicker(Note note, User heartClicker);
 
-    List<Heart> findAllByHeartClickerOrderByCreatedAtDesc(User user, Pageable pageable);
+    List<Heart> findAllByHeartClickerAndHeartIdLessThanOrderByHeartIdDesc(User user, Long heartId, Pageable pageable);
 }

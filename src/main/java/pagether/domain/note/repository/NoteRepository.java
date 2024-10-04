@@ -1,5 +1,6 @@
 package pagether.domain.note.repository;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,11 +18,11 @@ import java.util.Optional;
 @Repository
 @Transactional
 public interface NoteRepository extends JpaRepository<Note, Long> {
-    List<Note> findAllByUserAndCreatedAtAfterOrderByCreatedAtDesc(User user, LocalDateTime date);
+    List<Note> findAllByUserAndCreatedAtAfterOrderByNoteIdDesc(User user, LocalDateTime date);
     List<Note> findAllByCreatedAtAfterOrderByHeartCountDesc(LocalDateTime date);
-    List<Note> findAllByUserAndTypeOrderByCreatedAtDesc(User user, NoteType noteType);
-    List<Note> findAllByUserAndTypeAndIsPrivateOrderByCreatedAtDesc(User user, NoteType noteType, Boolean isPrivate);
-    List<Note> findAllByBookAndTypeAndIsPrivateOrderByCreatedAtDesc(Book book, NoteType noteType, Boolean isPrivate);
+    List<Note> findAllByUserAndTypeAndNoteIdLessThanOrderByNoteIdDesc(User user, NoteType noteType, Long cursor, Pageable pageable);
+    List<Note> findAllByUserAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(User user, NoteType noteType, Boolean isPrivate, Long cursor, Pageable pageable);
+    List<Note> findAllByBookAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(Book book, NoteType noteType, Boolean isPrivate, Long cursor, Pageable pageable);
     Optional<Note> findByReadInfoAndType(ReadInfo readInfo, NoteType noteType);
     List<Note> findAllByReadInfo(ReadInfo readInfo);
 
