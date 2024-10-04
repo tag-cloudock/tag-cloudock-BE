@@ -57,19 +57,11 @@ public class UserService {
         KakaoUserInfo kakaoUserInfo = oAuthService.getKakaoUserInfo(token);
 
         String email = kakaoUserInfo.getEmail();
-        String phoneNumber = kakaoUserInfo.getPhoneNumber();
 
         if (!userRepository.existsUserByUserId(email)) {
             redisTemplate.opsForValue().set(
                     EMAIL_KEYWORD + code,
                     email,
-                    EXPIRATION_TIME,
-                    TimeUnit.MILLISECONDS
-            );
-
-            redisTemplate.opsForValue().set(
-                    PHONE_NUMBER_KEYWORD + code,
-                    phoneNumber,
                     EXPIRATION_TIME,
                     TimeUnit.MILLISECONDS
             );
@@ -89,7 +81,6 @@ public class UserService {
 
     public UserResponse kakaoRegister(KakaoSignUpRequest request) {
         String email = redisTemplate.opsForValue().get(EMAIL_KEYWORD + request.getCode());
-        String phoneNumber = redisTemplate.opsForValue().get(PHONE_NUMBER_KEYWORD + request.getCode());
         if (userRepository.existsUserByUserId(email)) {
             throw new DuplicateUserIdException();
         }
@@ -98,7 +89,6 @@ public class UserService {
         User user = User.builder()
                 .id(id)
                 .userId(email)
-                .phone(phoneNumber)
                 .accountName(request.getAccountName())
                 .nickName(request.getNickname())
                 .imgPath(DEFAULT_IMAGE)
@@ -295,22 +285,19 @@ public class UserService {
     }
 
     public void validateOwnership(String ownerId, String requesterId) {
-        if (!ownerId.equals(requesterId)){
+        if (!ownerId.equals(requesterId))
             throw new UnauthorizedAccessException();
-        }
     }
 
     public Boolean isOwner(String ownerId, String requesterId) {
-        if (ownerId.equals(requesterId)){
+        if (ownerId.equals(requesterId))
             return true;
-        }
         return false;
     }
 
     public Boolean isOwner(User owner, User requester) {
-        if (owner.getUserId().equals(requester.getUserId())){
+        if (owner.getUserId().equals(requester.getUserId()))
             return true;
-        }
         return false;
     }
 
@@ -318,10 +305,8 @@ public class UserService {
     public UserResponse withdrawal(String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(IllegalArgumentException::new);
         user.setUserId("");
-        user.setPhone("");
         User updatedUser = userRepository.save(user);
 
         return new UserResponse(updatedUser);
     }
-
 }

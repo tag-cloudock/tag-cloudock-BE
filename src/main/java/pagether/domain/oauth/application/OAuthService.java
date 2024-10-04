@@ -86,7 +86,6 @@ public class OAuthService {
         while ((line = br.readLine()) != null) {
             result += line;
         }
-        System.out.println(result);
 
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(result);
@@ -98,13 +97,13 @@ public class OAuthService {
             email = element.getAsJsonObject().get("kakao_account").getAsJsonObject().get("email").getAsString();
         }
 
-        boolean hasPhoneNumber = element.getAsJsonObject().get("kakao_account").getAsJsonObject().get("has_phone_number").getAsBoolean();
-        String phoneNumber = "";
-        if (hasPhoneNumber) {
-            phoneNumber = element.getAsJsonObject().get("kakao_account").getAsJsonObject().get("phone_number").getAsString();
-        }
+//        boolean hasPhoneNumber = element.getAsJsonObject().get("kakao_account").getAsJsonObject().get("has_phone_number").getAsBoolean();
+//        String phoneNumber = "";
+//        if (hasPhoneNumber) {
+//            phoneNumber = element.getAsJsonObject().get("kakao_account").getAsJsonObject().get("phone_number").getAsString();
+//        }
 
         br.close();
-        return new KakaoUserInfo(email, phoneNumber);
+        return new KakaoUserInfo(email);
     }
 }

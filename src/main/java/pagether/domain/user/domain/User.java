@@ -31,9 +31,6 @@ public class User {
     private Boolean isAccountPrivate;
 
     @Column
-    private String phone;
-
-    @Column
     private String imgPath = "default.png";
 
     @Column
