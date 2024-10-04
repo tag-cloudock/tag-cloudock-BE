@@ -48,7 +48,7 @@ public class FeedService {
             User followee = follow.getFollowee();
             List<Note> notes = noteRepository.findAllByUserAndCreatedAtAfterOrderByNoteIdDesc(followee, afterDate);
             for (Note note : notes)
-                feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isClicked(note, user)));
+                feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isHeartClicked(note, user)));
         }
         feeds.sort(Comparator.comparing(FeedDTO::getId).reversed());
         return feeds;
@@ -61,7 +61,7 @@ public class FeedService {
         LocalDateTime afterDate = now.minusWeeks(WEEKS_TO_SUBTRACT);
         List<Note> notes = noteRepository.findAllByCreatedAtAfterOrderByHeartCountDesc(afterDate);
         for (Note note : notes)
-            feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isClicked(note, user)));
+            feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isHeartClicked(note, user)));
         feeds.sort(Comparator.comparing(FeedDTO::getId).reversed());
         return feeds;
     }

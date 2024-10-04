@@ -37,7 +37,7 @@ public class HeartService {
     public HeartResponse save(AddHeartRequest request, String userId) {
         User heartClicker = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Note note = noteRepository.findById(request.getNoteId()).orElseThrow(NoteNotFountException::new);
-        if (noteService.isClicked(note, userId))
+        if (noteService.isHeartClicked(note, userId))
             throw new AlreadyClickedException();
 
         Heart heart = Heart.builder()
@@ -54,7 +54,7 @@ public class HeartService {
     public void delete(Long noteId, String userId) {
         Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        if (noteService.isClicked(note, userId)) {
+        if (noteService.isHeartClicked(note, userId)) {
             Heart heart = heartRepository.findByNoteAndHeartClicker(note, user).orElseThrow(HeartNotFoundException::new);
             noteService.decrementHeartCount(note);
             heartRepository.deleteById(heart.getHeartId());

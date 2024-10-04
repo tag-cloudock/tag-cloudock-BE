@@ -59,8 +59,8 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseDto<UserInfoResponse> getInfo(@RequestParam String id) {
-        UserInfoResponse response = userService.get(id);
+    public ResponseDto<UserInfoResponse> getInfo(@RequestParam String id, Authentication authentication) {
+        UserInfoResponse response = userService.get(id, authentication.getName());
         return ResponseDto.of(OK.value(), SUCCESS_READ.getMessage(), response);
     }
 

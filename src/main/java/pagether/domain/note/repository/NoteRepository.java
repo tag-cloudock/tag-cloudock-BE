@@ -22,6 +22,7 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findAllByCreatedAtAfterOrderByHeartCountDesc(LocalDateTime date);
     List<Note> findAllByUserAndTypeAndNoteIdLessThanOrderByNoteIdDesc(User user, NoteType noteType, Long cursor, Pageable pageable);
     List<Note> findAllByUserAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(User user, NoteType noteType, Boolean isPrivate, Long cursor, Pageable pageable);
+    List<Note> findAllByBookAndTypeAndNoteIdLessThanOrderByNoteIdDesc(Book book, NoteType noteType, Long cursor, Pageable pageable);
     List<Note> findAllByBookAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(Book book, NoteType noteType, Boolean isPrivate, Long cursor, Pageable pageable);
     Optional<Note> findByReadInfoAndType(ReadInfo readInfo, NoteType noteType);
     List<Note> findAllByReadInfo(ReadInfo readInfo);

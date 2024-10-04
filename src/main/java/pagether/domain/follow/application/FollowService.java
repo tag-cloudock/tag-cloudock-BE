@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pagether.domain.alert.application.AlertService;
 import pagether.domain.alert.domain.AlertType;
+import pagether.domain.block.application.BlockService;
+import pagether.domain.block.exception.UserBlockedException;
 import pagether.domain.follow.domain.Follow;
 import pagether.domain.follow.domain.RequestStatus;
 import pagether.domain.follow.dto.FollowDTO;
@@ -37,6 +39,7 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final AlertService alertService;
+    private final BlockService blockService;
     public static final int PAGE_SIZE = 10;
 
     public FollowResponse save(AddFollowRequest request, String userId) {
@@ -48,6 +51,8 @@ public class FollowService {
 
         if (this.isFollowed(followee, follower))
             throw new AlreadyFollowedException();
+        if (blockService.isBlocked(follower, followee))
+            throw new UserBlockedException();
 
         RequestStatus requestStatus = RequestStatus.ACCEPTED;
         if(followee.getIsAccountPrivate())

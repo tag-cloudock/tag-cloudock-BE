@@ -56,8 +56,8 @@ public class NoteApiController {
     }
 
     @GetMapping("/by-book")
-    public ResponseDto<NotesResponse> getNotesByBook(@RequestParam String type, @RequestParam String isbn, @RequestParam Long cursor, Authentication authentication) {
-        NotesResponse response = noteService.getNotesByBook(type, isbn, cursor, authentication.getName());
+    public ResponseDto<NotesResponse> getNotesByBook(@RequestParam String type, @RequestParam String isbn, @RequestParam Long cursor, @RequestParam String userId, Authentication authentication) {
+        NotesResponse response = noteService.getNotesByBook(type, isbn, userId, cursor, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 

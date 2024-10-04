@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pagether.domain.alert.application.AlertService;
 import pagether.domain.alert.domain.AlertType;
+import pagether.domain.block.application.BlockService;
+import pagether.domain.block.exception.UserBlockedException;
 import pagether.domain.book.domain.Book;
 import pagether.domain.book.exception.BookNotFoundException;
 import pagether.domain.book.repository.BookRepository;
@@ -55,6 +57,7 @@ public class NoteService {
     private final AlertService alertService;
     private final ImageService imageService;
     private final UserService userService;
+    private final BlockService blockService;
 
     public static final int PAGE_SIZE = 10;
 
@@ -113,19 +116,23 @@ public class NoteService {
     public NoteContentResponse get(Long noteId, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Note note = noteRepository.findById(noteId).orElseThrow(NoteNotFountException::new);
-        if (!note.getUser().getUserId().equals(userId)){
+        if (!userService.isOwner(note.getUser(),user) && note.getIsPrivate())
             throw new UnauthorizedAccessException();
-        }
-        return new NoteContentResponse(note, this.isClicked(note, user));
+        if (blockService.isBlocked(user,note.getUser()))
+            throw new UserBlockedException();
+
+        return new NoteContentResponse(note, this.isHeartClicked(note, user));
     }
 
     public List<CommentDTO> getComment(Long discussionId, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Note discussion = noteRepository.findById(discussionId).orElseThrow(NoteNotFountException::new);
+        if (blockService.isBlocked(user,discussion.getUser()))
+            throw new UserBlockedException();
         List<Note> comment = noteRepository.findAllByDiscussion(discussion);
         List<CommentDTO> dtos = new ArrayList<>();
         for (Note note : comment){
-            CommentDTO dto = new CommentDTO(note, this.isClicked(note, user));
+            CommentDTO dto = new CommentDTO(note, this.isHeartClicked(note, user));
             dtos.add(dto);
         }
         return dtos;
@@ -153,34 +160,45 @@ public class NoteService {
         List<NoteDTO> notesResponse = new ArrayList<>();
         User noteUser = userRepository.findByUserId(noteUserId).orElseThrow(UserNotFountException::new);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+
+        if (blockService.isBlocked(user,noteUser))
+            throw new UserBlockedException();
+
         NoteType noteType = NoteType.fromString(type);
         List<Note> notes;
         Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        if (noteUserId.equals(userId)){
-            notes = noteRepository.findAllByUserAndTypeAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, cursor, pageable);
-        }else {
-            notes = noteRepository.findAllByUserAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, false,cursor, pageable);
-        }
+        if (userService.isOwner(noteUser, user)) notes = noteRepository.findAllByUserAndTypeAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, cursor, pageable);
+        else notes = noteRepository.findAllByUserAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, false,cursor, pageable);
+
         if (notes.isEmpty())
             throw new LastPageReachedException();
         for(Note note : notes){
-            NoteDTO dto = new NoteDTO(note, this.isClicked(note, user));
+            NoteDTO dto = new NoteDTO(note, this.isHeartClicked(note, user));
             notesResponse.add(dto);
         }
         return new NotesResponse(notesResponse, notes.get(notes.size()-1).getNoteId());
     }
 
-    public NotesResponse getNotesByBook(String type, String isbn, Long cursor, String userId) {
+    public NotesResponse getNotesByBook(String type, String isbn, String noteUserId, Long cursor, String userId) {
         List<NoteDTO> notesResponse = new ArrayList<>();
+        User noteUser = userRepository.findByUserId(noteUserId).orElseThrow(UserNotFountException::new);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+
+        if (blockService.isBlocked(user,noteUser))
+            throw new UserBlockedException();
+
         Book book = bookRepository.findByIsbn(isbn).orElseThrow(BookNotFoundException::new);
         NoteType noteType = NoteType.fromString(type);
         Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        List<Note> notes = noteRepository.findAllByBookAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(book, noteType, false, cursor, pageable);
+
+        List<Note> notes;
+        if (userService.isOwner(noteUser, user)) notes = noteRepository.findAllByBookAndTypeAndNoteIdLessThanOrderByNoteIdDesc(book, noteType, cursor, pageable);
+        else notes = noteRepository.findAllByBookAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(book, noteType, false, cursor, pageable);
+
         if (notes.isEmpty())
             throw new LastPageReachedException();
         for(Note note : notes){
-            NoteDTO dto = new NoteDTO(note, this.isClicked(note, user));
+            NoteDTO dto = new NoteDTO(note, this.isHeartClicked(note, user));
             notesResponse.add(dto);
         }
         return new NotesResponse(notesResponse, notes.get(notes.size()-1).getNoteId());
@@ -211,12 +229,12 @@ public class NoteService {
         noteRepository.save(note);
     }
 
-    public Boolean isClicked(Note note, String userId) {
+    public Boolean isHeartClicked(Note note, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         return heartRepository.existsByNoteAndHeartClicker(note, user);
     }
 
-    public Boolean isClicked(Note note, User user) {
+    public Boolean isHeartClicked(Note note, User user) {
         return heartRepository.existsByNoteAndHeartClicker(note, user);
     }
 

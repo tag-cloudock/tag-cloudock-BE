@@ -3,6 +3,8 @@ package pagether.domain.user.application;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import pagether.domain.block.application.BlockService;
+import pagether.domain.follow.application.FollowService;
 import pagether.domain.image.application.ImageService;
 import pagether.domain.oauth.application.OAuthService;
 import pagether.domain.oauth.domain.KakaoUserInfo;
@@ -38,6 +40,10 @@ public class UserService {
     private final JwtProvider jwtProvider;
     private final OAuthService oAuthService;
     private final ImageService imageService;
+
+    private final FollowService followService;
+    private final BlockService blockService;
+
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String DEFAULT_IMAGE = "default.png";
@@ -221,12 +227,18 @@ public class UserService {
         return signResponse;
     }
 
-    public UserInfoResponse get(String userId) {
-        if (!userRepository.existsUserByUserId(userId)) {
+    public UserInfoResponse get(String ownerId, String userId) {
+        if (!userRepository.existsUserByUserId(ownerId)) {
             throw new UserNotFountException();
         }
-        User user = userRepository.findByUserId(userId).get();
-        return new UserInfoResponse(user);
+        User owner = userRepository.findByUserId(ownerId).get();
+        User requester = userRepository.findByUserId(userId).get();
+
+        Boolean isFollowed = followService.isFollowed(owner, requester);
+        Boolean isFollowing = followService.isFollowed(requester, owner);
+        Boolean isBlocked = blockService.isBlocked(requester, owner);
+        Boolean isBlocking = blockService.isBlocked(owner, requester);
+        return new UserInfoResponse(owner, isFollowed, isFollowing, isBlocked, isBlocking);
     }
 
     public List<UserInfoResponse> search(String keyword) {
@@ -290,6 +302,13 @@ public class UserService {
 
     public Boolean isOwner(String ownerId, String requesterId) {
         if (ownerId.equals(requesterId)){
+            return true;
+        }
+        return false;
+    }
+
+    public Boolean isOwner(User owner, User requester) {
+        if (owner.getUserId().equals(requester.getUserId())){
             return true;
         }
         return false;
