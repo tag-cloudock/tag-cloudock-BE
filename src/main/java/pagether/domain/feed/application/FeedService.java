@@ -3,6 +3,7 @@ package pagether.domain.feed.application;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pagether.domain.block.application.BlockService;
 import pagether.domain.book.domain.Book;
 import pagether.domain.book.dto.req.AddBookRequest;
 import pagether.domain.book.dto.res.BookResponse;
@@ -34,6 +35,7 @@ public class FeedService {
     private final NoteRepository noteRepository;
     private final UserRepository userRepository;
     private final NoteService noteService;
+    private final BlockService blockService;
     private static final int WEEKS_TO_SUBTRACT = 4;
 
     public List<FeedDTO> getFollowFeeds(String userId) {
@@ -61,7 +63,8 @@ public class FeedService {
         LocalDateTime afterDate = now.minusWeeks(WEEKS_TO_SUBTRACT);
         List<Note> notes = noteRepository.findAllByCreatedAtAfterOrderByHeartCountDesc(afterDate);
         for (Note note : notes)
-            feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isHeartClicked(note, user)));
+            if (!(blockService.isBlocked(user, note.getUser()) || blockService.isBlocked(note.getUser(), user)))
+                feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isHeartClicked(note, user)));
         feeds.sort(Comparator.comparing(FeedDTO::getId).reversed());
         return feeds;
     }

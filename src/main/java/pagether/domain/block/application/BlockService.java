@@ -17,6 +17,8 @@ import pagether.domain.block.dto.res.BlockResponse;
 import pagether.domain.block.exception.AlreadyBlockedException;
 import pagether.domain.block.exception.BlockNotAllowedException;
 import pagether.domain.block.repository.BlockRepository;
+import pagether.domain.checker.application.CheckerService;
+import pagether.domain.follow.application.FollowService;
 import pagether.domain.follow.domain.Follow;
 import pagether.domain.follow.domain.RequestStatus;
 import pagether.domain.follow.dto.FollowDTO;
@@ -45,6 +47,8 @@ public class BlockService {
 
     private final BlockRepository blockRepository;
     private final UserRepository userRepository;
+    private final CheckerService checkerService;
+    private final FollowService followService;
     public static final int PAGE_SIZE = 10;
 
     public BlockResponse save(AddBlockRequest request, String userId) {
@@ -56,6 +60,11 @@ public class BlockService {
 
         if (this.isBlocked(blocked, blocking))
             throw new AlreadyBlockedException();
+
+        if (checkerService.isFollowed(blocking, blocked))
+            followService.delete(blocking.getId(), blocked.getId());
+        if (checkerService.isFollowed(blocked, blocking))
+            followService.delete(blocked.getId(), blocking.getId());
 
         Block block = Block.builder()
                 .blocked(blocked)

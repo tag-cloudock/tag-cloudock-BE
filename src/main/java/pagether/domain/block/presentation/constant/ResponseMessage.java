@@ -14,6 +14,7 @@ public enum ResponseMessage {
     ALREADY_BLOCKED("이미 차단 하고 있습니다."),
     BLOCK_NOT_ALLOWED("차단이 허용되지 않습니다."),
     USER_BLOCKED("상대방이 사용자를 차단하였습니다."),
+    USER_BLOCKING("차단한 사용자입니다."),
     ;
     private String message;
 }
