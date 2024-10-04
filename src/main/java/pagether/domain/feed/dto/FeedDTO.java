@@ -1,4 +1,4 @@
-package pagether.domain.feed.dto.res;
+package pagether.domain.feed.dto;
 
 import lombok.*;
 import pagether.domain.book.domain.Book;

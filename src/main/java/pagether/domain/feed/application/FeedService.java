@@ -1,29 +1,29 @@
 package pagether.domain.feed.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pagether.domain.block.application.BlockService;
-import pagether.domain.book.domain.Book;
-import pagether.domain.book.dto.req.AddBookRequest;
-import pagether.domain.book.dto.res.BookResponse;
-import pagether.domain.book.exception.BookNotFoundException;
-import pagether.domain.book.repository.BookRepository;
-import pagether.domain.feed.dto.res.FeedDTO;
+import pagether.domain.feed.dto.FeedDTO;
+import pagether.domain.feed.dto.res.FeedsResponse;
 import pagether.domain.follow.domain.Follow;
 import pagether.domain.follow.domain.RequestStatus;
 import pagether.domain.follow.repository.FollowRepository;
-import pagether.domain.heart.application.HeartService;
-import pagether.domain.heart.repository.HeartRepository;
 import pagether.domain.note.application.NoteService;
 import pagether.domain.note.domain.Note;
 import pagether.domain.note.repository.NoteRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.LastPageReachedException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -36,9 +36,27 @@ public class FeedService {
     private final UserRepository userRepository;
     private final NoteService noteService;
     private final BlockService blockService;
-    private static final int WEEKS_TO_SUBTRACT = 4;
+    private final RedisTemplate<String, String> redisTemplate;
+    private ObjectMapper objectMapper = new ObjectMapper();
+    private static final int WEEKS_TO_SUBTRACT = 5;
+    private static final int PAGE_SIZE = 10;
 
-    public List<FeedDTO> getFollowFeeds(String userId) {
+    public FeedsResponse getFollowFeeds(int cursor, String userId) throws JsonProcessingException {
+        if (cursor == 0){
+            makeFollowFeeds(userId);
+        }
+        String feedsJson = redisTemplate.opsForValue().get(userId + ":followFeeds");
+        if (feedsJson == null)
+            throw new LastPageReachedException();
+        List<FeedDTO> feeds =  objectMapper.readValue(feedsJson, new TypeReference<List<FeedDTO>>() {});
+        int end = Math.min(cursor+PAGE_SIZE, feeds.size());
+        if (cursor > feeds.size() || cursor < 0) {
+            throw new LastPageReachedException();
+        }
+        return new FeedsResponse(feeds.subList(cursor, end), cursor+PAGE_SIZE);
+    }
+
+    public void makeFollowFeeds(String userId) throws JsonProcessingException {
         List<FeedDTO> feeds = new ArrayList<>();
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
 
@@ -53,10 +71,27 @@ public class FeedService {
                 feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isHeartClicked(note, user)));
         }
         feeds.sort(Comparator.comparing(FeedDTO::getId).reversed());
-        return feeds;
+
+        String feedsJson = objectMapper.writeValueAsString(feeds);
+        redisTemplate.opsForValue().set(userId + ":followFeeds", feedsJson);
     }
 
-    public List<FeedDTO> getPopularFeeds(String userId) {
+    public FeedsResponse getPopularFeeds(int cursor, String userId) throws JsonProcessingException {
+        if (cursor == 0){
+            makePopularFeeds(userId);
+        }
+        String feedsJson = redisTemplate.opsForValue().get(userId + ":popularFeeds");
+        if (feedsJson == null)
+            throw new LastPageReachedException();
+        List<FeedDTO> feeds =  objectMapper.readValue(feedsJson, new TypeReference<List<FeedDTO>>() {});
+        int end = Math.min(cursor+PAGE_SIZE, feeds.size());
+        if (cursor > feeds.size() || cursor < 0) {
+            throw new LastPageReachedException();
+        }
+        return new FeedsResponse(feeds.subList(cursor, end), cursor+PAGE_SIZE);
+    }
+
+    public void makePopularFeeds(String userId) throws JsonProcessingException {
         List<FeedDTO> feeds = new ArrayList<>();
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         LocalDateTime now = LocalDateTime.now();
@@ -66,7 +101,8 @@ public class FeedService {
             if (!(blockService.isBlocked(user, note.getUser()) || blockService.isBlocked(note.getUser(), user)))
                 feeds.add(new FeedDTO(note, note.getHeartCount(), noteService.isHeartClicked(note, user)));
         feeds.sort(Comparator.comparing(FeedDTO::getId).reversed());
-        return feeds;
+        String feedsJson = objectMapper.writeValueAsString(feeds);
+        redisTemplate.opsForValue().set(userId + ":popularFeeds", feedsJson);
     }
 
     public List<FeedDTO> getRecommendedFeeds(String userId) {
