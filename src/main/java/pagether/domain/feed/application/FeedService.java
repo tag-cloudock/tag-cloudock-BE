@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pagether.domain.block.application.BlockService;
+import pagether.domain.feed.domain.FetchFeedType;
 import pagether.domain.feed.dto.FeedDTO;
 import pagether.domain.feed.dto.res.FeedsResponse;
 import pagether.domain.follow.domain.Follow;
@@ -19,6 +20,7 @@ import pagether.domain.note.repository.NoteRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.IllegalArgumentException;
 import pagether.global.config.exception.LastPageReachedException;
 
 import java.time.LocalDateTime;
@@ -40,6 +42,16 @@ public class FeedService {
     private ObjectMapper objectMapper = new ObjectMapper();
     private static final int WEEKS_TO_SUBTRACT = 5;
     private static final int PAGE_SIZE = 10;
+
+    public FeedsResponse getFeeds(FetchFeedType type, int cursor, String userId) throws JsonProcessingException {
+        if (type.equals(FetchFeedType.FOLLOW))
+            return getFollowFeeds(cursor, userId);
+        else if (type.equals(FetchFeedType.POPULAR))
+            return getPopularFeeds(cursor, userId);
+        else if (type.equals(FetchFeedType.RECOMMENDED))
+            return getRecommendedFeeds(cursor, userId);
+        throw new IllegalArgumentException();
+    }
 
     public FeedsResponse getFollowFeeds(int cursor, String userId) throws JsonProcessingException {
         if (cursor == 0){
@@ -105,8 +117,7 @@ public class FeedService {
         redisTemplate.opsForValue().set(userId + ":popularFeeds", feedsJson);
     }
 
-    public List<FeedDTO> getRecommendedFeeds(String userId) {
-        List<FeedDTO> feeds = new ArrayList<>();
-        return feeds;
+    public FeedsResponse getRecommendedFeeds(int cursor, String userId) {
+        return new FeedsResponse();
     }
 }

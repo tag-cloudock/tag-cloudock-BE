@@ -47,7 +47,7 @@ public class ReadInfoApiController {
         ReadInfoResponse response = readInfoService.done(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
-    @PatchMapping
+    @PatchMapping("/date")
     public ResponseDto<ReadInfoResponse> updateDate(@RequestBody UpdateDateRequest request, Authentication authentication) {
         ReadInfoResponse response = readInfoService.updateDate(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);

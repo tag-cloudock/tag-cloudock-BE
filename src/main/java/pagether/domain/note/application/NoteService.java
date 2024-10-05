@@ -9,12 +9,15 @@ import org.springframework.web.multipart.MultipartFile;
 import pagether.domain.alert.application.AlertService;
 import pagether.domain.alert.domain.AlertType;
 import pagether.domain.block.application.BlockService;
+import pagether.domain.block.exception.BlockNotAllowedException;
 import pagether.domain.block.exception.UserBlockedException;
 import pagether.domain.book.domain.Book;
 import pagether.domain.book.exception.BookNotFoundException;
 import pagether.domain.book.repository.BookRepository;
+import pagether.domain.checker.application.CheckerService;
 import pagether.domain.heart.application.HeartService;
 import pagether.domain.heart.domain.Heart;
+import pagether.domain.heart.exception.HeartAlreadyClickedException;
 import pagether.domain.heart.repository.HeartRepository;
 import pagether.domain.image.application.ImageService;
 import pagether.domain.note.domain.Note;
@@ -58,8 +61,10 @@ public class NoteService {
     private final ImageService imageService;
     private final UserService userService;
     private final BlockService blockService;
+    private final CheckerService checkerService;
 
     public static final int PAGE_SIZE = 10;
+    private static final Pageable PAGEABLE = PageRequest.of(0, PAGE_SIZE);
 
     public NoteResponse save(AddNoteRequest request, String userId,  MultipartFile pic) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
@@ -68,10 +73,7 @@ public class NoteService {
 
         Note discussion = null;
         if (request.getType().equals(NoteType.REVIEW)){
-            if (!(lastReadInfo.getReadStatus().equals(ReadStatus.READ) || lastReadInfo.getReadStatus().equals(ReadStatus.STOPPED)))
-                throw new ReviewNotAllowedException();
-            if (lastReadInfo.getHasReview())
-                throw new ReviewNotAllowedException();
+            checkReviewAllowed(lastReadInfo);
         } else if (request.getType().equals(NoteType.COMMENT)){
             discussion = noteRepository.findById(request.getDiscussionId()).orElseThrow(NoteNotFountException::new);
         }
@@ -127,8 +129,7 @@ public class NoteService {
     public List<CommentDTO> getComment(Long discussionId, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Note discussion = noteRepository.findById(discussionId).orElseThrow(NoteNotFountException::new);
-        if (blockService.isBlocked(user,discussion.getUser()))
-            throw new UserBlockedException();
+        blockService.checkUserBlock(user,discussion.getUser());
         List<Note> comment = noteRepository.findAllByDiscussion(discussion);
         List<CommentDTO> dtos = new ArrayList<>();
         for (Note note : comment){
@@ -160,22 +161,13 @@ public class NoteService {
         List<NoteDTO> notesResponse = new ArrayList<>();
         User noteUser = userRepository.findByUserId(noteUserId).orElseThrow(UserNotFountException::new);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-
-        if (blockService.isBlocked(user,noteUser))
-            throw new UserBlockedException();
-
+        blockService.checkUserBlock(user,noteUser);
         NoteType noteType = NoteType.fromString(type);
         List<Note> notes;
-        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        if (userService.isOwner(noteUser, user)) notes = noteRepository.findAllByUserAndTypeAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, cursor, pageable);
-        else notes = noteRepository.findAllByUserAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, false,cursor, pageable);
-
-        if (notes.isEmpty())
-            throw new LastPageReachedException();
-        for(Note note : notes){
-            NoteDTO dto = new NoteDTO(note, this.isHeartClicked(note, user));
-            notesResponse.add(dto);
-        }
+        if (userService.isOwner(noteUser, user)) notes = noteRepository.findAllByUserAndTypeAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, cursor, PAGEABLE);
+        else notes = noteRepository.findAllByUserAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(noteUser, noteType, false,cursor, PAGEABLE);
+        checkerService.checkLastPage(notes);
+        for(Note note : notes) notesResponse.add(new NoteDTO(note, this.isHeartClicked(note, user)));
         return new NotesResponse(notesResponse, notes.get(notes.size()-1).getNoteId());
     }
 
@@ -183,17 +175,14 @@ public class NoteService {
         List<NoteDTO> notesResponse = new ArrayList<>();
         User noteUser = userRepository.findByUserId(noteUserId).orElseThrow(UserNotFountException::new);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-
-        if (blockService.isBlocked(user,noteUser))
-            throw new UserBlockedException();
+        blockService.checkUserBlock(user,noteUser);
 
         Book book = bookRepository.findByIsbn(isbn).orElseThrow(BookNotFoundException::new);
         NoteType noteType = NoteType.fromString(type);
-        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
 
         List<Note> notes;
-        if (userService.isOwner(noteUser, user)) notes = noteRepository.findAllByBookAndTypeAndNoteIdLessThanOrderByNoteIdDesc(book, noteType, cursor, pageable);
-        else notes = noteRepository.findAllByBookAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(book, noteType, false, cursor, pageable);
+        if (userService.isOwner(noteUser, user)) notes = noteRepository.findAllByBookAndTypeAndNoteIdLessThanOrderByNoteIdDesc(book, noteType, cursor, PAGEABLE);
+        else notes = noteRepository.findAllByBookAndTypeAndIsPrivateAndNoteIdLessThanOrderByNoteIdDesc(book, noteType, false, cursor, PAGEABLE);
 
         if (notes.isEmpty())
             throw new LastPageReachedException();
@@ -207,10 +196,8 @@ public class NoteService {
     public NotesResponse getHeartedNotes(String userId, Long cursor) {
         List<NoteDTO> notesResponse = new ArrayList<>();
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        List<Heart> hearts = heartRepository.findAllByHeartClickerAndHeartIdLessThanOrderByHeartIdDesc(user, cursor, pageable);
-        if (hearts.isEmpty())
-            throw new LastPageReachedException();
+        List<Heart> hearts = heartRepository.findAllByHeartClickerAndHeartIdLessThanOrderByHeartIdDesc(user, cursor, PAGEABLE);
+        checkerService.checkLastPage(hearts);
         for(Heart heart : hearts){
             Note note = heart.getNote();
             NoteDTO dto = new NoteDTO(note, true);
@@ -229,13 +216,20 @@ public class NoteService {
         noteRepository.save(note);
     }
 
-    public Boolean isHeartClicked(Note note, String userId) {
-        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+    public Boolean isHeartClicked(Note note, User user) {
         return heartRepository.existsByNoteAndHeartClicker(note, user);
     }
 
-    public Boolean isHeartClicked(Note note, User user) {
-        return heartRepository.existsByNoteAndHeartClicker(note, user);
+    public void checkHeartAlreadyClicked(Note note, User user) {
+        if (heartRepository.existsByNoteAndHeartClicker(note, user))
+            throw new HeartAlreadyClickedException();
+    }
+
+    public void checkReviewAllowed(ReadInfo lastReadInfo) {
+        if (!(lastReadInfo.getReadStatus().equals(ReadStatus.READ) || lastReadInfo.getReadStatus().equals(ReadStatus.STOPPED)))
+            throw new ReviewNotAllowedException();
+        if (lastReadInfo.getHasReview())
+            throw new ReviewNotAllowedException();
     }
 
 

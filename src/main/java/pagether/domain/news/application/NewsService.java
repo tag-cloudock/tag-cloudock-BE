@@ -27,6 +27,7 @@ public class NewsService {
     private final NewsRepository newsRepository;
     private final UserRepository userRepository;
     public static final int PAGE_SIZE = 10;
+    private static final Pageable PAGEABLE = PageRequest.of(0, PAGE_SIZE);
 
     public NewsResponse save(AddNewsRequest request) {
         News news = News.builder()
@@ -37,11 +38,9 @@ public class NewsService {
         return new NewsResponse(news);
     }
     public NewsResponses getAll(String userId, Long cursor) {
-        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        List<News> newsDatas = newsRepository.findAllByNewsIdLessThanOrderByNewsIdDesc(cursor, pageable);
+        List<News> newsDatas = newsRepository.findAllByNewsIdLessThanOrderByNewsIdDesc(cursor, PAGEABLE);
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Long lastSeenNewsId = user.getLastSeenNewsId();
-
         List<NewsResponse> newsResponses = newsDatas.stream().map(NewsResponse::new).toList();
         List<NewsResponse> readNews = filterNewsByReadStatus(newsResponses, lastSeenNewsId,true);
         List<NewsResponse> unreadNews = filterNewsByReadStatus(newsResponses, lastSeenNewsId,false);
@@ -62,9 +61,8 @@ public class NewsService {
     }
 
     public void delete(Long newsId) {
-        if (!newsRepository.existsById(newsId)) {
+        if (!newsRepository.existsById(newsId))
             throw new NewsNotFoundException();
-        }
         newsRepository.deleteById(newsId);
     }
 }

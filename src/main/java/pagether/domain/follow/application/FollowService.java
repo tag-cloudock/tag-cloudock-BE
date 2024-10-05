@@ -9,9 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import pagether.domain.alert.application.AlertService;
 import pagether.domain.alert.domain.AlertType;
 import pagether.domain.block.application.BlockService;
+import pagether.domain.block.exception.BlockNotAllowedException;
 import pagether.domain.block.exception.UserBlockedException;
 import pagether.domain.block.exception.UserBlockingException;
 import pagether.domain.checker.application.CheckerService;
+import pagether.domain.follow.domain.FetchFollowType;
 import pagether.domain.follow.domain.Follow;
 import pagether.domain.follow.domain.RequestStatus;
 import pagether.domain.follow.dto.FollowDTO;
@@ -26,6 +28,7 @@ import pagether.domain.follow.repository.FollowRepository;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.IllegalArgumentException;
 import pagether.global.config.exception.LastPageReachedException;
 
 import java.time.LocalDateTime;
@@ -43,25 +46,18 @@ public class FollowService {
     private final AlertService alertService;
     private final CheckerService checkerService;
     public static final int PAGE_SIZE = 10;
+    private static final Pageable PAGEABLE = PageRequest.of(0, PAGE_SIZE);
 
     public FollowResponse save(AddFollowRequest request, String userId) {
-        if (request.getFolloweeId().equals(userId))
-            throw new FollowNotAllowedException();
-
         User followee = userRepository.findByUserId(request.getFolloweeId()).orElseThrow(UserNotFountException::new);
         User follower = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
 
-        if (this.isFollowed(followee, follower))
-            throw new AlreadyFollowedException();
-
-        if (checkerService.isBlocked(follower, followee))
-            throw new UserBlockedException();
-        if (checkerService.isBlocked(followee, follower))
-            throw new UserBlockingException();
+        checkSelfFollowAttempt(request.getFolloweeId(),userId);
+        checkAlreadyFollowed(followee, follower);
+        checkBlock(followee, follower);
 
         RequestStatus requestStatus = RequestStatus.ACCEPTED;
-        if(followee.getIsAccountPrivate())
-            requestStatus = RequestStatus.PENDING;
+        if(followee.getIsAccountPrivate()) requestStatus = RequestStatus.PENDING;
 
         Follow follow = Follow.builder()
                 .followee(followee)
@@ -80,34 +76,52 @@ public class FollowService {
         return new FollowCountResponse(FolloweeCount, FollowerCount);
     }
 
-    public FollowListResponse getFollowingList(String userId, Long cursor) {
-        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        List<Follow> followingList = followRepository.findAllByFollowerAndRequestStatusAndFollowIdLessThan(user, RequestStatus.ACCEPTED, cursor, pageable);
-        if (followingList.isEmpty())
-            throw new LastPageReachedException();
+    public FollowListResponse getList(FetchFollowType type, Long cursor, String userId) {
+        if (type.equals(FetchFollowType.FOLLOWER)){
+            return getFollowerList(cursor, userId);
+        } else if (type.equals(FetchFollowType.FOLLOWING)){
+            return getFollowingList(cursor, userId);
+        }
+        throw new IllegalArgumentException();
+    }
 
+    public FollowListResponse getFollowingList(Long cursor, String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        List<Follow> followingList = followRepository.findAllByFollowerAndRequestStatusAndFollowIdLessThan(user, RequestStatus.ACCEPTED, cursor, PAGEABLE);
+        checkerService.checkLastPage(followingList);
         List<FollowDTO> dtos = new ArrayList<>();
-        for (Follow follow : followingList)
-            dtos.add(new FollowDTO(follow, follow.getFollowee()));
+        for (Follow follow : followingList) dtos.add(new FollowDTO(follow, follow.getFollowee()));
         return new FollowListResponse(dtos, followingList.get(followingList.size()-1).getFollowId());
     }
 
-    public FollowListResponse getFollowerList(String userId, Long cursor) {
+    public FollowListResponse getFollowerList(Long cursor, String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        List<Follow> followerList = followRepository.findAllByFolloweeAndRequestStatusAndFollowIdLessThan(user, RequestStatus.ACCEPTED, cursor, pageable);
-        if (followerList.isEmpty())
-            throw new LastPageReachedException();
-
+        List<Follow> followerList = followRepository.findAllByFolloweeAndRequestStatusAndFollowIdLessThan(user, RequestStatus.ACCEPTED, cursor, PAGEABLE);
+        checkerService.checkLastPage(followerList);
         List<FollowDTO> dtos = new ArrayList<>();
-        for (Follow follow : followerList)
-            dtos.add(new FollowDTO(follow, follow.getFollower()));
+        for (Follow follow : followerList) dtos.add(new FollowDTO(follow, follow.getFollower()));
         return new FollowListResponse(dtos, followerList.get(followerList.size()-1).getFollowId());
+    }
+
+    public void checkBlock(User followee, User follower) {
+        if (checkerService.isBlocked(follower, followee))
+            throw new UserBlockedException();
+        if (checkerService.isBlocked(followee, follower))
+            throw new UserBlockingException();
     }
 
     public Boolean isFollowed(User followee, User follower) {
         return followRepository.existsByFolloweeAndFollower(followee, follower);
+    }
+
+    public void checkAlreadyFollowed(User followee, User follower) {
+        if (followRepository.existsByFolloweeAndFollower(followee, follower))
+            throw new AlreadyFollowedException();
+    }
+
+    public void checkSelfFollowAttempt(String followeeId, String requesterId) {
+        if (followeeId.equals(requesterId))
+            throw new FollowNotAllowedException();
     }
 
     public void accept(Long followId) {

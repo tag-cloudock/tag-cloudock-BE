@@ -44,10 +44,9 @@ public class ReportService {
         return new ReportResponse(report);
     }
 
-    public void delete(Long noteId) {
-        if (!reportRepository.existsById(noteId)) {
+    public void delete(Long reportId) {
+        if (!reportRepository.existsById(reportId))
             throw new ReportNotFountException();
-        }
-        reportRepository.deleteById(noteId);
+        reportRepository.deleteById(reportId);
     }
 }

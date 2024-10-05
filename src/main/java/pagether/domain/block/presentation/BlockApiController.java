@@ -24,7 +24,7 @@ public class BlockApiController {
         BlockResponse response = blockService.save(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
-    @GetMapping("/users")
+    @GetMapping("/all")
     public ResponseDto<BlockListResponse> getBlockList(Authentication authentication, Long cursor) {
         BlockListResponse response = blockService.getBlockedList(authentication.getName(), cursor);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);

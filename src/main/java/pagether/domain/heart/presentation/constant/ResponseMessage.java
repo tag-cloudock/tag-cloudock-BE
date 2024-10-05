@@ -11,7 +11,7 @@ public enum ResponseMessage {
     SUCCESS_UPDATE("수정에 성공했습니다."),
     SUCCESS_DELETE("삭제에 성공했습니다."),
     HEART_NOT_FOUND("존재하지 않는 항목입니다."),
-    ALREADY_CLICKED_AND_NOT_CLICKED("이미 하트를 눌렀거나 누르지 않았습니다.")
+    HEART_ALREADY_CLICKED("이미 하트를 눌렀습니다.")
     ;
     private String message;
 }

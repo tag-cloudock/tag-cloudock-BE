@@ -39,8 +39,8 @@ import pagether.global.config.exception.UnauthorizedAccessException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,17 +61,13 @@ public class ReadInfoService {
         ReadInfo readInfo;
         if (!readInfoRepository.existsByBookAndUser(book, user)){
             readInfo = createNewReadInfo(book, user, ReadStatus.READING);
-            readInfo = readInfoRepository.save(readInfo);
         }else {
             readInfo = readInfoRepository.findByBookAndUserAndIsLatest(book, user, true).orElseThrow(ReadInfoNotFountException::new);
             if (readInfo.getReadStatus().equals(ReadStatus.PINNED) || readInfo.getReadStatus().equals(ReadStatus.RE_PINNED)){
-                readInfo.start();
-                readInfo = readInfoRepository.save(readInfo);
+                readInfo = changeToReading(readInfo);
             }else{
-                readInfo.changeToOld();
-                ReadInfo newReadInfo = createNewReadInfo(book, user, ReadStatus.READING);
-                readInfoRepository.save(readInfo);
-                readInfo = readInfoRepository.save(newReadInfo);
+                changeToOld(readInfo);
+                readInfo = createNewReadInfo(book, user, ReadStatus.READING);
             }
         }
         noteService.createStartNote(user, book);
@@ -79,7 +75,7 @@ public class ReadInfoService {
     }
 
     private ReadInfo createNewReadInfo(Book book, User user, ReadStatus readStatus) {
-        return ReadInfo.builder()
+        ReadInfo readInfo = ReadInfo.builder()
                 .book(book)
                 .user(user)
                 .readCount(0L)
@@ -90,14 +86,23 @@ public class ReadInfoService {
                 .startDate(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();
+        return readInfoRepository.save(readInfo);
+    }
+
+    private ReadInfo changeToOld(ReadInfo readInfo) {
+        readInfo.changeToOld();
+        return readInfoRepository.save(readInfo);
+    }
+
+    private ReadInfo changeToReading(ReadInfo readInfo) {
+        readInfo.start();
+        return readInfoRepository.save(readInfo);
     }
 
     public ReadInfoResponse updateDate(UpdateDateRequest request, String userId) {
         ReadInfo readInfo = readInfoRepository.findById(request.getReadId()).orElseThrow(ReadInfoNotFountException::new);
-        if (!readInfo.getUser().getUserId().equals(userId))
-            throw new UnauthorizedAccessException();
-        if (request.getStartDate().isAfter(request.getCompletionDate()))
-            throw new IllegalArgumentException();
+        userService.validateOwnership(readInfo.getUser().getUserId(), userId);
+        validateDate(request.getStartDate(), request.getCompletionDate());
         readInfo.setStartDate(request.getStartDate());
         readInfo.setCompletionDate(request.getCompletionDate());
         readInfo = readInfoRepository.save(readInfo);
@@ -112,10 +117,8 @@ public class ReadInfoService {
 
         if (readInfoRepository.existsByBookAndUser(book, user)){
             ReadInfo latestReadInfo = readInfoRepository.findByBookAndUserAndIsLatest(book, user, true).orElseThrow(ReadInfoNotFountException::new);
-            if (!(latestReadInfo.getReadStatus().equals(ReadStatus.READ) || latestReadInfo.getReadStatus().equals(ReadStatus.STOPPED)))
-                throw new PinNotAllowedException();
+            checkPinAllowed(latestReadInfo);
             latestReadInfo.changeToOld();
-            readInfoRepository.save(latestReadInfo);
             readStatus = ReadStatus.RE_PINNED;
         }
         ReadInfo readInfo = createNewReadInfo(book, user, readStatus);
@@ -153,12 +156,8 @@ public class ReadInfoService {
         List<ReadInfo> pined = readInfoRepository.findAllByUserAndReadStatus(user, ReadStatus.PINNED);
         List<ReadInfo> rePined = readInfoRepository.findAllByUserAndReadStatus(user, ReadStatus.RE_PINNED);
         pined.addAll(rePined);
-        List<BookImgDTO> readingDTOs = new ArrayList<>();
-        List<BookImgDTO> pinedDTOs = new ArrayList<>();
-        for(ReadInfo readInfo : reading)
-            readingDTOs.add(new BookImgDTO(readInfo));
-        for(ReadInfo readInfo : pined)
-            pinedDTOs.add(new BookImgDTO(readInfo));
+        List<BookImgDTO> readingDTOs = reading.stream().map(BookImgDTO::new).collect(Collectors.toList());
+        List<BookImgDTO> pinedDTOs = pined.stream().map(BookImgDTO::new).collect(Collectors.toList());
         return new ReadingAndPinedBooksResponse(readingDTOs, pinedDTOs);
     }
 
@@ -168,16 +167,13 @@ public class ReadInfoService {
 
         List<BookImgDTO> readingDTOs = new ArrayList<>();
         List<BookImgDTO> readDTOs = new ArrayList<>();
-
         for(ReadInfo readInfo : readInfos){
             BookImgDTO dto = new BookImgDTO(readInfo);
-            if (readInfo.getReadStatus().equals(ReadStatus.READING))
+            if (readInfo.getReadStatus().equals(ReadStatus.READING) ||
+                    readInfo.getReadStatus().equals(ReadStatus.STOPPED))
                 readingDTOs.add(dto);
-            else if (readInfo.getReadStatus().equals(ReadStatus.STOPPED))
-                readingDTOs.add(dto);
-            else if (readInfo.getReadStatus().equals(ReadStatus.READ))
-                readDTOs.add(dto);
-            else if (readInfo.getReadStatus().equals(ReadStatus.RE_PINNED))
+            else if (readInfo.getReadStatus().equals(ReadStatus.READ) ||
+                    readInfo.getReadStatus().equals(ReadStatus.RE_PINNED))
                 readDTOs.add(dto);
         }
         return new ReadingAndReadBooksResponse(readingDTOs, readDTOs);
@@ -191,13 +187,16 @@ public class ReadInfoService {
 
         for(Follow follow : follows){
             User followee = userRepository.findByUserId(follow.getFollowee().getUserId()).orElseThrow(UserNotFountException::new);
-            Boolean isFriendRead = readInfoRepository.existsByBookAndUser(book, followee);
-            if (isFriendRead){
+            if (isFriendRead(book, followee)){
                 ReadInfo readInfo = readInfoRepository.findByBookAndUserAndIsLatest(book, followee, true).orElseThrow(ReadInfoNotFountException::new);
                 dtos.add(new ReadFriendInfoDTO(readInfo));
             }
         }
         return dtos;
+    }
+
+    public Boolean isFriendRead(Book book, User friend) {
+        return readInfoRepository.existsByBookAndUser(book, friend);
     }
 
     public ReadInfoByBookResponse getByBook(String isbn, String userId, String requestedUserId) {
@@ -225,6 +224,16 @@ public class ReadInfoService {
         ReadStatus currentStatus = lastReadInfo.getReadStatus();
         Long currentPage = lastReadInfo.getCurrentPage();
         return new ReadInfoByBookResponse(lastReadInfo, lastReadInfo.getReadInfoId(), currentPage, currentStatus, dtos);
+    }
+
+    public void checkPinAllowed(ReadInfo latestReadInfo) {
+        if (!(latestReadInfo.getReadStatus().equals(ReadStatus.READ) || latestReadInfo.getReadStatus().equals(ReadStatus.STOPPED)))
+            throw new PinNotAllowedException();
+    }
+
+    public void validateDate(LocalDateTime startDate, LocalDateTime completionDate) {
+        if (startDate.isAfter(completionDate))
+            throw new IllegalArgumentException();
     }
 
     public void delete(Long readId) {

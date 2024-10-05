@@ -47,10 +47,10 @@ public class ReadInfo {
     @Column(nullable = false)
     private Boolean isLatest;
 
-
     public void changeToOld() {
         this.isLatest = false;
     }
+
     public void setCurrentPage(Long page) {
         this.currentPage = page;
     }

@@ -37,7 +37,7 @@ public class NoteApiController {
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 
-    @GetMapping("/{discussionId}")
+    @GetMapping("/comments/{discussionId}")
     public ResponseDto<List<CommentDTO>> getComment(@PathVariable Long discussionId, Authentication authentication) {
         List<CommentDTO> responses = noteService.getComment(discussionId, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), responses);

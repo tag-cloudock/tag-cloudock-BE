@@ -46,4 +46,8 @@ public class CheckerService {
     public Boolean isBlocked(User blocked, User blocking) {
         return blockRepository.existsByBlockedAndBlocking(blocked, blocking);
     }
+
+    public void checkLastPage(List<?> datas) {
+        if (datas.isEmpty()) throw new LastPageReachedException();
+    }
 }

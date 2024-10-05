@@ -16,6 +16,7 @@ import pagether.domain.block.dto.res.BlockListResponse;
 import pagether.domain.block.dto.res.BlockResponse;
 import pagether.domain.block.exception.AlreadyBlockedException;
 import pagether.domain.block.exception.BlockNotAllowedException;
+import pagether.domain.block.exception.UserBlockedException;
 import pagether.domain.block.repository.BlockRepository;
 import pagether.domain.checker.application.CheckerService;
 import pagether.domain.follow.application.FollowService;
@@ -50,21 +51,15 @@ public class BlockService {
     private final CheckerService checkerService;
     private final FollowService followService;
     public static final int PAGE_SIZE = 10;
+    private static final Pageable PAGEABLE = PageRequest.of(0, PAGE_SIZE);
 
     public BlockResponse save(AddBlockRequest request, String userId) {
-        if (request.getBlockedUserId().equals(userId))
-            throw new BlockNotAllowedException();
-
         User blocked = userRepository.findByUserId(request.getBlockedUserId()).orElseThrow(UserNotFountException::new);
         User blocking = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
 
-        if (this.isBlocked(blocked, blocking))
-            throw new AlreadyBlockedException();
-
-        if (checkerService.isFollowed(blocking, blocked))
-            followService.delete(blocking.getId(), blocked.getId());
-        if (checkerService.isFollowed(blocked, blocking))
-            followService.delete(blocked.getId(), blocking.getId());
+        checkSelfBlockAttempt(request.getBlockedUserId(), userId);
+        checkAlreadyBlocked(blocked, blocking);
+        checkAndUnfollow(blocked, blocking);
 
         Block block = Block.builder()
                 .blocked(blocked)
@@ -82,19 +77,37 @@ public class BlockService {
 
     public BlockListResponse getBlockedList(String userId, Long cursor) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        List<Block> blockList = blockRepository.findAllByBlockingAndBlockIdLessThan(user, cursor, pageable);
-        if (blockList.isEmpty())
-            throw new LastPageReachedException();
-
+        List<Block> blockList = blockRepository.findAllByBlockingAndBlockIdLessThan(user, cursor, PAGEABLE);
+        checkerService.checkLastPage(blockList);
         List<BlockDTO> dtos = new ArrayList<>();
-        for (Block block : blockList)
-            dtos.add(new BlockDTO(block));
+        for (Block block : blockList) dtos.add(new BlockDTO(block));
         return new BlockListResponse(dtos, blockList.get(blockList.size()-1).getBlockId());
+    }
+
+    public void checkAndUnfollow(User blocked, User blocking) {
+        if (checkerService.isFollowed(blocking, blocked))
+            followService.delete(blocking.getId(), blocked.getId());
+        if (checkerService.isFollowed(blocked, blocking))
+            followService.delete(blocked.getId(), blocking.getId());
+    }
+
+    public void checkAlreadyBlocked(User blocked, User blocking) {
+        if (blockRepository.existsByBlockedAndBlocking(blocked, blocking))
+            throw new AlreadyBlockedException();
     }
 
     public Boolean isBlocked(User blocked, User blocking) {
         return blockRepository.existsByBlockedAndBlocking(blocked, blocking);
+    }
+
+    public void checkUserBlock(User blocked, User blocking) {
+        if (blockRepository.existsByBlockedAndBlocking(blocked, blocking))
+            throw new UserBlockedException();
+    }
+
+    public void checkSelfBlockAttempt(String blockedUserId, String requesterId) {
+        if (blockedUserId.equals(requesterId))
+            throw new BlockNotAllowedException();
     }
 
     public void delete(String blockedUserId, String blockingUserId) {

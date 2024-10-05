@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableAsync;
 import pagether.domain.alert.domain.Alert;
 import pagether.domain.alert.domain.AlertType;
+import pagether.domain.alert.domain.FetchAlarmType;
 import pagether.domain.alert.dto.res.AlertResponse;
 import pagether.domain.alert.dto.res.RequestAlertResponse;
 import pagether.domain.alert.exception.AlertNotFoundException;
@@ -13,11 +14,13 @@ import pagether.domain.alert.dto.res.AlertResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pagether.domain.checker.application.CheckerService;
 import pagether.domain.follow.domain.Follow;
 import pagether.domain.note.domain.Note;
 import pagether.domain.user.domain.User;
 import pagether.domain.user.exception.UserNotFountException;
 import pagether.domain.user.repository.UserRepository;
+import pagether.global.config.exception.IllegalArgumentException;
 import pagether.global.config.exception.LastPageReachedException;
 
 import java.time.LocalDateTime;
@@ -32,7 +35,10 @@ public class AlertService {
 
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
+    private final CheckerService checkerService;
     public static final int PAGE_SIZE = 10;
+    private static final Pageable PAGEABLE = PageRequest.of(0, PAGE_SIZE);
+
 
     public AlertResponse createAlert(User alarmSender, User alarmReceiver, AlertType alertType, Note note) {
         Alert alert = Alert.builder()
@@ -58,23 +64,27 @@ public class AlertService {
         return new AlertResponse(alert);
     }
 
-    public AlertResponses getAllRequestAlertsByUser(String userId, Long cursor) {
+    public AlertResponses getAlertsByUser(FetchAlarmType type, String userId, Long cursor) {
+        if (type.equals(FetchAlarmType.GENERAL))
+            return getGeneralAlertsByUser(userId, cursor);
+        else if (type.equals(FetchAlarmType.REQUEST))
+            return getRequestAlertsByUser(userId, cursor);
+        throw new IllegalArgumentException();
+    }
+
+    public AlertResponses getRequestAlertsByUser(String userId, Long cursor) {
         User alarmReceiver = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        List<Alert> requestAlerts = alertRepository.findAllByAlarmReceiverAndAlertTypeAndAlertIdLessThanOrderByAlertIdDesc(alarmReceiver, AlertType.FOLLOW_REQUEST, cursor, pageable);
-        if (requestAlerts.isEmpty())
-            throw new LastPageReachedException();
+        List<Alert> requestAlerts = alertRepository.findAllByAlarmReceiverAndAlertTypeAndAlertIdLessThanOrderByAlertIdDesc(alarmReceiver, AlertType.FOLLOW_REQUEST, cursor, PAGEABLE);
+        checkerService.checkLastPage(requestAlerts);
         List<RequestAlertResponse> requestAlertResponses = requestAlerts.stream().map(RequestAlertResponse::new).toList();
         return new AlertResponses(requestAlertResponses, requestAlerts.get(requestAlerts.size()-1).getAlertId());
     }
 
-    public AlertResponses getAllAlertsByUser(String userId, Long cursor) {
+    public AlertResponses getGeneralAlertsByUser(String userId, Long cursor) {
         User alarmReceiver = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Long lastSeenAlertId = alarmReceiver.getLastSeenAlertId();
-        Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-        List<Alert> alerts = alertRepository.findAllByAlarmReceiverAndAlertTypeNotAndAlertIdLessThanOrderByAlertIdDesc(alarmReceiver, AlertType.FOLLOW_REQUEST, cursor, pageable);
-        if (alerts.isEmpty())
-            throw new LastPageReachedException();
+        List<Alert> alerts = alertRepository.findAllByAlarmReceiverAndAlertTypeNotAndAlertIdLessThanOrderByAlertIdDesc(alarmReceiver, AlertType.FOLLOW_REQUEST, cursor, PAGEABLE);
+        checkerService.checkLastPage(alerts);
         List<AlertResponse> alertResponses = alerts.stream().map(AlertResponse::new).toList();
         List<AlertResponse> readAlert = filterAlertsByReadStatus(alertResponses, lastSeenAlertId, true);
         List<AlertResponse> unreadAlert = filterAlertsByReadStatus(alertResponses, lastSeenAlertId, false);
@@ -95,9 +105,8 @@ public class AlertService {
     }
 
     public void delete(Long alertId) {
-        if (!alertRepository.existsById(alertId)) {
+        if (!alertRepository.existsById(alertId))
             throw new AlertNotFoundException();
-        }
         alertRepository.deleteById(alertId);
     }
 }
