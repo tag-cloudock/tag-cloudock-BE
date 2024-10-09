@@ -101,7 +101,7 @@ public class BookService {
         HttpEntity<?> entity = new HttpEntity<>(new HttpHeaders());
         ResponseEntity<Map> resultMap = restTemplate.exchange(makeSearchUrl(keyword, page), HttpMethod.GET, entity, Map.class);
         Map<String, Object> body = resultMap.getBody();
-        if (body != null) throw new LastPageReachedException();
+        if (body == null) throw new LastPageReachedException();
 
         List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("item");
         for (Map<String, Object> itemMap : items) {
@@ -132,7 +132,7 @@ public class BookService {
         HttpEntity<?> entity = new HttpEntity<>(new HttpHeaders());
         ResponseEntity<Map> resultMap = restTemplate.exchange(makeLookUpUrl(isbn), HttpMethod.GET, entity, Map.class);
         Map<String, Object> body = resultMap.getBody();
-        if (body != null) throw new BookNotFoundException();
+        if (body == null) throw new BookNotFoundException();
 
         List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("item");
         Map<String, Object> item = items.get(0);
