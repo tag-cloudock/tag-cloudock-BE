@@ -31,12 +31,6 @@ public class UserController {
         return ResponseDto.of(OK.value(), SUCCESS_REFRESH.getMessage(), response);
     }
 
-    @PostMapping(value = "/guest")
-    public ResponseDto<UserResponse> guestSignUp(@RequestBody GuestSignUpRequest request) {
-        UserResponse response = userService.guestRegister(request);
-        return ResponseDto.of(OK.value(), SUCCESS_REGISTER.getMessage(), response);
-    }
-
     @GetMapping(value = "/email")
     public ResponseDto<UserResponse> emailSignIn(@RequestBody EmailSignInRequest request) {
         UserResponse response = userService.emailLogin(request);
@@ -55,11 +49,11 @@ public class UserController {
         return ResponseDto.of(OK.value(), SUCCESS_UPDATE.getMessage());
     }
 
-    @GetMapping
-    public ResponseDto<UserInfoResponse> getInfo(@RequestParam String id, Authentication authentication) {
-        UserInfoResponse response = userService.get(id, authentication.getName());
-        return ResponseDto.of(OK.value(), SUCCESS_READ.getMessage(), response);
-    }
+//    @GetMapping
+//    public ResponseDto<UserInfoResponse> getInfo(@RequestParam String id, Authentication authentication) {
+//        UserInfoResponse response = userService.get(id, authentication.getName());
+//        return ResponseDto.of(OK.value(), SUCCESS_READ.getMessage(), response);
+//    }
 
     @GetMapping("/search")
     public ResponseDto<List<UserInfoResponse>> search(@RequestParam String keyword) {
@@ -85,15 +79,9 @@ public class UserController {
         return ResponseDto.of(OK.value(), SUCCESS_UPDATE.getMessage(), response);
     }
 
-    @PatchMapping("/account-name")
-    public ResponseDto<UserResponse> updateAccountName(@RequestBody UpdateUserRequest request, Authentication authentication) {
-        UserResponse response = userService.updateAccountName(authentication.getName(), request);
-        return ResponseDto.of(OK.value(), SUCCESS_UPDATE.getMessage(), response);
-    }
-
-    @PatchMapping("/bio")
+    @PatchMapping("/intro")
     public ResponseDto<UserResponse> updateBio(@RequestBody UpdateUserRequest request, Authentication authentication) {
-        UserResponse response = userService.updateBio(authentication.getName(), request);
+        UserResponse response = userService.updateIntro(authentication.getName(), request);
         return ResponseDto.of(OK.value(), SUCCESS_UPDATE.getMessage(), response);
     }
 

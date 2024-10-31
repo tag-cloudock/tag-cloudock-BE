@@ -10,4 +10,9 @@ public class EmailSignUpRequest {
     private String nickname;
     private String accountName;
     private String password;
+    private String name;
+    private String address;
+    private String detailAddress;
+    private String phone;
+    private String intro;
 }

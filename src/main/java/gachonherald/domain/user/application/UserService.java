@@ -3,8 +3,6 @@ package gachonherald.domain.user.application;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import gachonherald.domain.block.application.BlockService;
-import gachonherald.domain.follow.application.FollowService;
 import gachonherald.domain.image.application.ImageService;
 import gachonherald.domain.oauth.application.OAuthService;
 import gachonherald.domain.oauth.domain.KakaoUserInfo;
@@ -40,9 +38,6 @@ public class UserService {
     private final JwtProvider jwtProvider;
     private final OAuthService oAuthService;
     private final ImageService imageService;
-
-    private final FollowService followService;
-    private final BlockService blockService;
 
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -89,17 +84,15 @@ public class UserService {
         User user = User.builder()
                 .id(id)
                 .userId(email)
-                .accountName(request.getAccountName())
+                .name(request.getName())
+                .address(request.getAddress())
+                .detailAddress(request.getDetailAddress())
                 .nickName(request.getNickname())
+                .phone(request.getPhone())
+                .intro(request.getIntro())
                 .imgPath(DEFAULT_IMAGE)
-                .role(Role.USER)
-                .bio("")
-                .isHeartAlertEnabled(false)
-                .isFollowAlertEnabled(false)
-                .isCommentAlertEnabled(false)
-                .isAccountPrivate(false)
-                .lastSeenNewsId(0L)
-                .lastSeenAlertId(0L)
+                .role(Role.READER)
+
                 .build();
         userRepository.save(user);
         UserResponse signResponse = UserResponse.builder()
@@ -120,9 +113,6 @@ public class UserService {
         User user;
         if (request.getEmail() != null && userRepository.existsUserByUserId(request.getEmail())){
             user = userRepository.findByUserId(request.getEmail()).orElseThrow(UserNotFountException::new);
-        }
-        else if (request.getAccountName() != null && userRepository.existsByAccountName(request.getAccountName())){
-            user = userRepository.findByAccountName(request.getAccountName()).orElseThrow(UserNotFountException::new);
         }else{
             throw new UserNotFountException();
         }
@@ -153,18 +143,15 @@ public class UserService {
         User user = User.builder()
                 .id(id)
                 .userId(request.getEmail())
-                .accountName(request.getAccountName())
+                .name(request.getName())
+                .address(request.getAddress())
+                .detailAddress(request.getDetailAddress())
                 .nickName(request.getNickname())
-                .passWord(encodedPassword)
+                .phone(request.getPhone())
+                .intro(request.getIntro())
                 .imgPath(DEFAULT_IMAGE)
-                .role(Role.USER)
-                .bio("")
-                .isHeartAlertEnabled(false)
-                .isFollowAlertEnabled(false)
-                .isCommentAlertEnabled(false)
-                .isAccountPrivate(false)
-                .lastSeenNewsId(0L)
-                .lastSeenAlertId(0L)
+                .passWord(request.getPassword())
+                .role(Role.READER)
                 .build();
         userRepository.save(user);
         UserResponse signResponse = UserResponse.builder()
@@ -188,48 +175,20 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public UserResponse guestRegister(GuestSignUpRequest request) {
-        String userId = UUID.randomUUID().toString();
-        String id = UUID.randomUUID().toString();
-        User user = User.builder()
-                .id(id)
-                .userId(userId)
-                .accountName(request.getAccountName())
-                .nickName(request.getNickname())
-                .imgPath(DEFAULT_IMAGE)
-                .role(Role.USER)
-                .bio("")
-                .isHeartAlertEnabled(false)
-                .isFollowAlertEnabled(false)
-                .isCommentAlertEnabled(false)
-                .isAccountPrivate(false)
-                .lastSeenNewsId(0L)
-                .lastSeenAlertId(0L)
-                .build();
-        userRepository.save(user);
-        UserResponse signResponse = UserResponse.builder()
-                .id(user.getId())
-                .userId(user.getUserId())
-                .nickname(user.getNickName())
-                .roles(user.getRole())
-                .accessToken(jwtProvider.createAccessToken(user.getUserId(), user.getRole()))
-                .build();
-        return signResponse;
-    }
 
-    public UserInfoResponse get(String ownerId, String userId) {
-        if (!userRepository.existsUserByUserId(ownerId)) {
-            throw new UserNotFountException();
-        }
-        User owner = userRepository.findByUserId(ownerId).get();
-        User requester = userRepository.findByUserId(userId).get();
-
-        Boolean isFollowed = followService.isFollowed(owner, requester);
-        Boolean isFollowing = followService.isFollowed(requester, owner);
-        Boolean isBlocked = blockService.isBlocked(requester, owner);
-        Boolean isBlocking = blockService.isBlocked(owner, requester);
-        return new UserInfoResponse(owner, isFollowed, isFollowing, isBlocked, isBlocking);
-    }
+//    public UserInfoResponse get(String ownerId, String userId) {
+//        if (!userRepository.existsUserByUserId(ownerId)) {
+//            throw new UserNotFountException();
+//        }
+//        User owner = userRepository.findByUserId(ownerId).get();
+//        User requester = userRepository.findByUserId(userId).get();
+//
+//        Boolean isFollowed = followService.isFollowed(owner, requester);
+//        Boolean isFollowing = followService.isFollowed(requester, owner);
+//        Boolean isBlocked = blockService.isBlocked(requester, owner);
+//        Boolean isBlocking = blockService.isBlocked(owner, requester);
+//        return new UserInfoResponse(owner, isFollowed, isFollowing, isBlocked, isBlocking);
+//    }
 
     public List<UserInfoResponse> search(String keyword) {
         List<UserInfoResponse> responses = new ArrayList<>();
@@ -260,16 +219,6 @@ public class UserService {
         return new UserResponse(updatedUser);
     }
 
-    public UserResponse updateAccountName(String userId, UpdateUserRequest request) {
-        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        if (userRepository.existsByAccountName(request.getAccountName())){
-            throw new IllegalArgumentException();
-        }
-        user.setAccountName(request.getAccountName());
-        User updatedUser = userRepository.save(user);
-        return new UserResponse(updatedUser);
-    }
-
     public UserResponse updateNickName(String userId, UpdateUserRequest request) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         user.setNickName(request.getNickname());
@@ -277,9 +226,9 @@ public class UserService {
         return new UserResponse(updatedUser);
     }
 
-    public UserResponse updateBio(String userId, UpdateUserRequest request) {
+    public UserResponse updateIntro(String userId, UpdateUserRequest request) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
-        user.setBio(request.getBio());
+        user.setIntro(request.getIntro());
         User updatedUser = userRepository.save(user);
         return new UserResponse(updatedUser);
     }

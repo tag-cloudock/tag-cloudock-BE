@@ -8,6 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE, force = true)
 public class UpdateUserRequest {
     private final String nickname;
-    private final String accountName;
-    private final String bio;
+    private final String Intro;
 }

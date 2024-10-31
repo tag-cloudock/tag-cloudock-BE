@@ -22,34 +22,25 @@ public class User {
     private String nickName;
 
     @Column(nullable = false)
-    private String accountName;
+    private String name;
 
     @Column(nullable = false)
-    private String bio;
+    private String address;
 
     @Column(nullable = false)
-    private Boolean isAccountPrivate;
+    private String detailAddress;
+
+    @Column(nullable = false)
+    private String phone;
+
+    @Column(nullable = false)
+    private String intro;
+
+    @Column(nullable = false)
+    private String passWord;
 
     @Column
     private String imgPath = "default.png";
-
-    @Column
-    private String passWord;
-
-    @Column(nullable = false)
-    private Long lastSeenNewsId;
-
-    @Column(nullable = false)
-    private Long lastSeenAlertId;
-
-    @Column(nullable = false)
-    private Boolean isHeartAlertEnabled;
-
-    @Column(nullable = false)
-    private Boolean isFollowAlertEnabled;
-
-    @Column(nullable = false)
-    private Boolean isCommentAlertEnabled;
 
     @Enumerated(EnumType.STRING)
     private Role role;

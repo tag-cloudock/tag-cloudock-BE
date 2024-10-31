@@ -7,6 +7,14 @@ import lombok.Setter;
 @Setter
 public class KakaoSignUpRequest {
     private String code;
+    private String name;
     private String nickname;
-    private String accountName;
+    private String userId;
+    private String email;
+    private String address;
+    private String detailAddress;
+    private String phone;
+    private String intro;
+    private String password;
+
 }
