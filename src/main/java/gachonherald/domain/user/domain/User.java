@@ -12,11 +12,14 @@ import lombok.*;
 public class User {
 
     @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(unique = true, nullable = false)
     private String userId;
+
+    @Column
+    private String email;
 
     @Column(nullable = false)
     private String nickName;
@@ -24,24 +27,31 @@ public class User {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column
     private String address;
 
-    @Column(nullable = false)
+    @Column
     private String detailAddress;
 
-    @Column(nullable = false)
+    @Column
     private String phone;
-
-    @Column(nullable = false)
+    @Column
     private String intro;
 
-    @Column(nullable = false)
-    private String passWord;
+    @Column
+    private String major;
 
     @Column
-    private String imgPath = "default.png";
+    @Enumerated(EnumType.STRING)
+    private Position position;
 
+    @Column
+    private Boolean isCurrentMember;
+
+    @Column
+    private String passWord;
+    @Column
+    private String imgPath = "default.png";
     @Enumerated(EnumType.STRING)
     private Role role;
 }

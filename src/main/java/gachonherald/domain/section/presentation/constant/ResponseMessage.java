@@ -1,4 +1,4 @@
-package gachonherald.domain.section.presentation;
+package gachonherald.domain.section.presentation.constant;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

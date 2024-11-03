@@ -1,5 +1,11 @@
 package gachonherald.domain.user.application;
 
+import gachonherald.domain.article.domain.Article;
+import gachonherald.domain.article.dto.ArticleDTO;
+import gachonherald.domain.user.domain.Position;
+import gachonherald.domain.user.dto.ReporterDTO;
+import gachonherald.domain.user.dto.res.ReporterResponse;
+import gachonherald.domain.user.dto.res.ReportersResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,10 +30,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -80,9 +85,7 @@ public class UserService {
             throw new DuplicateUserIdException();
         }
 
-        String id = UUID.randomUUID().toString();
         User user = User.builder()
-                .id(id)
                 .userId(email)
                 .name(request.getName())
                 .address(request.getAddress())
@@ -141,7 +144,6 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         User user = User.builder()
-                .id(id)
                 .userId(request.getEmail())
                 .name(request.getName())
                 .address(request.getAddress())
@@ -176,19 +178,28 @@ public class UserService {
     }
 
 
-//    public UserInfoResponse get(String ownerId, String userId) {
-//        if (!userRepository.existsUserByUserId(ownerId)) {
-//            throw new UserNotFountException();
-//        }
-//        User owner = userRepository.findByUserId(ownerId).get();
-//        User requester = userRepository.findByUserId(userId).get();
-//
-//        Boolean isFollowed = followService.isFollowed(owner, requester);
-//        Boolean isFollowing = followService.isFollowed(requester, owner);
-//        Boolean isBlocked = blockService.isBlocked(requester, owner);
-//        Boolean isBlocking = blockService.isBlocked(owner, requester);
-//        return new UserInfoResponse(owner, isFollowed, isFollowing, isBlocked, isBlocking);
-//    }
+    public ReporterResponse getReporterInfo(Long reporterId) {
+        User reporter = userRepository.findById(reporterId).orElseThrow(UserNotFountException::new);
+
+        if (reporter.getRole().equals(Role.READER)){
+            throw new UnauthorizedAccessException();
+        }
+        return new ReporterResponse(reporter);
+    }
+
+    public ReportersResponse getReporters() {
+        List<ReporterDTO> response = new ArrayList<>();
+        List<User> reporters = userRepository.findAllByIsCurrentMember(true);
+        Map<Position, Integer> positionOrder = new HashMap<>();
+        for (int i = 0; i < Position.values().length; i++) {
+            positionOrder.put(Position.values()[i], i);
+        }
+        reporters = reporters.stream()
+                .sorted(Comparator.comparingInt(user -> positionOrder.get(user.getPosition())))
+                .collect(Collectors.toList());
+        for(User reporter : reporters) response.add(new ReporterDTO(reporter));
+        return new ReportersResponse(response);
+    }
 
     public List<UserInfoResponse> search(String keyword) {
         List<UserInfoResponse> responses = new ArrayList<>();

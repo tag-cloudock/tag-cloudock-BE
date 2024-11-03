@@ -22,7 +22,7 @@ jwt:
   secret:
     key: youcantrevealtheaccesssecretkey123459876
 image:
-  path: /home/ubuntu/images/
+  path: /Users/yangts/photo/
   secret-key: BARAMIMPORTANT
 solapi:
   apikey: NCSF9OEUAONU71TT

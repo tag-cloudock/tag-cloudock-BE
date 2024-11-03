@@ -12,7 +12,7 @@ import gachonherald.domain.user.domain.User;
 @NoArgsConstructor
 public class UserInfoResponse {
 
-    private String id;
+    private Long id;
     private String userId;
     private String nickname;
     private String imgPath;
