@@ -29,6 +29,13 @@ public class UserController {
         return ResponseDto.of(OK.value(), SUCCESS_REFRESH.getMessage(), response);
     }
 
+    @GetMapping(value = "/email-check/{email}")
+    public ResponseDto<EmailCheckResponse> emailCheck(@PathVariable String email) {
+        EmailCheckResponse response = userService.emailCheck(email);
+        return ResponseDto.of(OK.value(), SUCCESS_READ.getMessage(), response);
+    }
+
+
     @GetMapping(value = "/email")
     public ResponseDto<UserResponse> emailSignIn(@RequestBody EmailSignInRequest request) {
         UserResponse response = userService.emailLogin(request);

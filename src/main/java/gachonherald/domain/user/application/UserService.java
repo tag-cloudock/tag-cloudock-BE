@@ -4,8 +4,7 @@ import gachonherald.domain.article.domain.Article;
 import gachonherald.domain.article.dto.ArticleDTO;
 import gachonherald.domain.user.domain.Position;
 import gachonherald.domain.user.dto.ReporterDTO;
-import gachonherald.domain.user.dto.res.ReporterResponse;
-import gachonherald.domain.user.dto.res.ReportersResponse;
+import gachonherald.domain.user.dto.res.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,8 +15,6 @@ import gachonherald.domain.oauth.dto.req.KakaoSignUpRequest;
 import gachonherald.domain.user.domain.Role;
 import gachonherald.domain.user.domain.User;
 import gachonherald.domain.user.dto.req.*;
-import gachonherald.domain.user.dto.res.UserInfoResponse;
-import gachonherald.domain.user.dto.res.UserResponse;
 import gachonherald.domain.user.exception.DuplicateUserIdException;
 import gachonherald.domain.user.exception.IncorrectPasswordException;
 import gachonherald.domain.user.exception.UserNotFountException;
@@ -110,6 +107,13 @@ public class UserService {
     }
 
     public void emailCertification(EmailSignUpRequest request) {
+    }
+
+    public EmailCheckResponse emailCheck(String email) {
+        if (userRepository.existsUserByUserId(email)){
+            return new EmailCheckResponse(1);
+        }
+        return new EmailCheckResponse(2);
     }
 
     public UserResponse emailLogin(EmailSignInRequest request) {
