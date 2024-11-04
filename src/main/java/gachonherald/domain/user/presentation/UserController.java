@@ -35,6 +35,12 @@ public class UserController {
         return ResponseDto.of(OK.value(), SUCCESS_READ.getMessage(), response);
     }
 
+    @PostMapping(value = "/email-verify/{email}")
+    public ResponseDto sendVerificationEmail(@PathVariable String email) {
+        userService.sendVerificationEmail(email);
+        return ResponseDto.of(OK.value(), SUCCESS_READ.getMessage());
+    }
+
 
     @PostMapping(value = "/email/signin")
     public ResponseDto<UserResponse> emailSignIn(@RequestBody EmailSignInRequest request) {

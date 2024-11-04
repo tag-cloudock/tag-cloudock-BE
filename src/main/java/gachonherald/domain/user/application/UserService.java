@@ -5,6 +5,8 @@ import gachonherald.domain.article.dto.ArticleDTO;
 import gachonherald.domain.user.domain.Position;
 import gachonherald.domain.user.dto.ReporterDTO;
 import gachonherald.domain.user.dto.res.*;
+import gachonherald.domain.user.exception.IncorrectVerifyCodeException;
+import gachonherald.global.config.mail.MailSendService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -40,6 +43,7 @@ public class UserService {
     private final JwtProvider jwtProvider;
     private final OAuthService oAuthService;
     private final ImageService imageService;
+    private final MailSendService mailSendService;
 
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -92,7 +96,7 @@ public class UserService {
                 .intro(request.getIntro())
                 .imgPath(DEFAULT_IMAGE)
                 .role(Role.READER)
-
+                .createdAt(LocalDateTime.now())
                 .build();
         userRepository.save(user);
         UserResponse signResponse = UserResponse.builder()
@@ -107,7 +111,14 @@ public class UserService {
     }
 
     public void emailCertification(EmailSignUpRequest request) {
+
+
     }
+
+    public void sendVerificationEmail(String email) {
+        mailSendService.joinEmail(email);
+    }
+
 
     public EmailCheckResponse emailCheck(String email) {
         if (userRepository.existsUserByUserId(email)){
@@ -127,7 +138,9 @@ public class UserService {
 //        if (!passwordEncoder.matches(request.getPassword(), user.getPassWord())) {
 //            throw new IncorrectPasswordException();
 //        }
-        if (user.getPassWord().equals(request.getPassword())){
+        System.out.println(user.getPassWord());
+        System.out.println(request.getPassword());
+        if (!user.getPassWord().equals(request.getPassword())){
             throw new IncorrectPasswordException();
         }
         UserResponse signResponse = UserResponse.builder()
@@ -145,19 +158,28 @@ public class UserService {
         if (userRepository.existsUserByUserId(request.getEmail())) {
             throw new DuplicateUserIdException();
         }
+
+        String emailVerifyCode = redisTemplate.opsForValue().get(mailSendService.VERIFY_EMAIL_KEYWORD + request.getEmail());
+        if (!request.getCode().equals(emailVerifyCode)){
+            throw new IncorrectVerifyCodeException();
+        }
 //        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 //        String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.builder()
                 .userId(request.getEmail())
+                .nickName(request.getNickname())
+                .passWord(request.getPassword())
+                .role(Role.READER)
+
+                .email(request.getEmail())
                 .name(request.getName())
                 .address(request.getAddress())
                 .detailAddress(request.getDetailAddress())
-                .nickName(request.getNickname())
                 .phone(request.getPhone())
                 .intro(request.getIntro())
+                .major(request.getMajor())
                 .imgPath(DEFAULT_IMAGE)
-                .passWord(request.getPassword())
-                .role(Role.READER)
+                .createdAt(LocalDateTime.now())
                 .build();
         userRepository.save(user);
         UserResponse signResponse = UserResponse.builder()

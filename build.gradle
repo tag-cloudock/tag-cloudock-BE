@@ -62,6 +62,10 @@ dependencies {
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
 
     implementation 'com.google.cloud:google-cloud-vision:3.34.0'
+
+    //mail
+    implementation 'javax.mail:mail:1.4.7'
+    implementation 'org.springframework:spring-context-support:5.3.9'
 }
 
 tasks.named('test') {

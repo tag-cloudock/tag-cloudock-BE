@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class EmailSignUpRequest {
     private String email;
+    private String code;
     private String nickname;
     private String accountName;
     private String password;
@@ -15,4 +16,5 @@ public class EmailSignUpRequest {
     private String detailAddress;
     private String phone;
     private String intro;
+    private String major;
 }

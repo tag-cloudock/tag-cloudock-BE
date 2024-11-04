@@ -15,6 +15,7 @@ public enum ResponseMessage {
     USER_NOT_FOUND("존재하지 않는 유저입니다."),
     DUPLICATE_USER_ID("중복된 유저아이디입니다."),
     INCORRECT_PASSWORD("비밀번호가 틀립니다."),
+    INCORRECT_VERIFY_CODE("인증번호가 틀립니다."),
     ;
     private String message;
 }

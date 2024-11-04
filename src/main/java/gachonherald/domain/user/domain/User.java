@@ -3,6 +3,8 @@ package gachonherald.domain.user.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity(name = "users")
 @Builder
 @Getter
@@ -24,7 +26,7 @@ public class User {
     @Column(nullable = false)
     private String nickName;
 
-    @Column(nullable = false)
+    @Column
     private String name;
 
     @Column
@@ -54,4 +56,7 @@ public class User {
     private String imgPath = "default.png";
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column
+    private LocalDateTime createdAt;
 }

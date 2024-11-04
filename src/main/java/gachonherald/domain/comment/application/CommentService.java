@@ -22,6 +22,7 @@ import gachonherald.domain.user.domain.User;
 import gachonherald.domain.user.exception.UserNotFountException;
 import gachonherald.domain.user.repository.UserRepository;
 import gachonherald.global.config.exception.UnauthorizedAccessException;
+import gachonherald.global.config.mail.MailSendService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,12 +41,12 @@ public class CommentService {
     private final ArticleRepository articleRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
-
     public static final int PAGE_SIZE_LARGE = 10;
     public static final int PAGE_SIZE_SMALL = 5;
     public CommentResponse save(AddCommentRequest request, String userId) {
         User commenter = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         Article article = articleRepository.findById(request.getArticleId()).orElseThrow(SectionNotFoundException::new);
+
 
         Comment comment = Comment.builder()
                 .commenter(commenter)
