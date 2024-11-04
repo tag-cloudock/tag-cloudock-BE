@@ -39,4 +39,12 @@ public class CommentController {
         CommentsResponse response = commentService.getAll(pageNumber);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
+
+    @DeleteMapping("/{commentId}")
+    public ResponseDto getAll(@PathVariable Long commentId, Authentication authentication) {
+        commentService.delete(commentId, authentication.getName());
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_DELETE.getMessage());
+    }
+
+
 }

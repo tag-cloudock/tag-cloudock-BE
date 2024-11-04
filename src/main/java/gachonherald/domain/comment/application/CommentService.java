@@ -13,9 +13,11 @@ import gachonherald.domain.comment.dto.CommentDTO;
 import gachonherald.domain.comment.dto.req.AddCommentRequest;
 import gachonherald.domain.comment.dto.res.CommentResponse;
 import gachonherald.domain.comment.dto.res.CommentsResponse;
+import gachonherald.domain.comment.exception.CommentNotFoundException;
 import gachonherald.domain.comment.repository.CommentRepository;
 import gachonherald.domain.section.domain.Section;
 import gachonherald.domain.section.exception.SectionNotFoundException;
+import gachonherald.domain.user.domain.Position;
 import gachonherald.domain.user.domain.User;
 import gachonherald.domain.user.exception.UserNotFountException;
 import gachonherald.domain.user.repository.UserRepository;
@@ -74,5 +76,17 @@ public class CommentService {
         int pageCount = (totalCount-1)/PAGE_SIZE_LARGE+1;
         for(Comment comment : comments) commentsResponse.add(new CommentDTO(comment));
         return new CommentsResponse(commentsResponse, pageCount);
+    }
+
+    public void delete(Long commentId, String userId) {
+        if (!commentRepository.existsById(commentId))
+            throw new CommentNotFoundException();
+        User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        Comment comment = commentRepository.findById(commentId).orElseThrow(CommentNotFoundException::new);
+        if (comment.getCommenter().getUserId().equals(userId) || user.getPosition().equals(Position.EDITOR_IN_CHIEF)){
+            commentRepository.deleteById(commentId);
+            return;
+        }
+        throw new UnauthorizedAccessException();
     }
 }
