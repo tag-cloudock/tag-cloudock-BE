@@ -3,6 +3,7 @@ package gachonherald.domain.comment.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import gachonherald.domain.article.domain.Article;
 import gachonherald.domain.section.domain.Section;
+import gachonherald.domain.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,36 +16,20 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Comment {
-
     @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentId;
 
-    @Column(unique = true, nullable = false)
-    private String title;
-
-    @Column(nullable = false)
-    private String subtitle;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnore
+    private User commenter;
 
     @Column(nullable = false)
     private String content;
 
-    @Column(nullable = false)
-    private String mainImage;
-
-    @Column(nullable = false)
-    private Long reporterId;
-
     @ManyToOne(fetch = FetchType.EAGER)
-//    @JoinColumn(name = "articleId")
     @JsonIgnore
     private Article article;
-
-    @Column(nullable = false)
-    private Long viewCount;
-
-    @Column(nullable = false)
-    private Boolean isVisible;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

@@ -118,22 +118,25 @@ public class UserService {
 
     public UserResponse emailLogin(EmailSignInRequest request) {
         User user;
-        if (request.getEmail() != null && userRepository.existsUserByUserId(request.getEmail())){
+        if (userRepository.existsUserByUserId(request.getEmail())){
             user = userRepository.findByUserId(request.getEmail()).orElseThrow(UserNotFountException::new);
         }else{
             throw new UserNotFountException();
         }
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassWord())) {
+//        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+//        if (!passwordEncoder.matches(request.getPassword(), user.getPassWord())) {
+//            throw new IncorrectPasswordException();
+//        }
+        if (user.getPassWord().equals(request.getPassword())){
             throw new IncorrectPasswordException();
         }
-
         UserResponse signResponse = UserResponse.builder()
                 .id(user.getId())
                 .userId(user.getUserId())
                 .nickname(user.getNickName())
                 .roles(user.getRole())
                 .accessToken(jwtProvider.createAccessToken(user.getUserId(), user.getRole()))
+                .refreshToken(jwtProvider.createRefreshToken(user.getUserId()))
                 .build();
         return signResponse;
     }
@@ -142,11 +145,8 @@ public class UserService {
         if (userRepository.existsUserByUserId(request.getEmail())) {
             throw new DuplicateUserIdException();
         }
-        String id = UUID.randomUUID().toString();
-
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
-
+//        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+//        String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.builder()
                 .userId(request.getEmail())
                 .name(request.getName())
@@ -166,6 +166,7 @@ public class UserService {
                 .nickname(user.getNickName())
                 .roles(user.getRole())
                 .accessToken(jwtProvider.createAccessToken(user.getUserId(), user.getRole()))
+                .refreshToken(jwtProvider.createRefreshToken(user.getUserId()))
                 .build();
         return signResponse;
     }
@@ -234,9 +235,12 @@ public class UserService {
         return new UserResponse(updatedUser);
     }
 
-    public UserResponse updateNickName(String userId, UpdateUserRequest request) {
+    public UserResponse updateProfile(String userId, UpdateUserRequest request) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         user.setNickName(request.getNickname());
+        user.setIntro(request.getIntro());
+        user.setMajor(request.getMajor());
+        user.setEmail(request.getEmail());
         User updatedUser = userRepository.save(user);
         return new UserResponse(updatedUser);
     }

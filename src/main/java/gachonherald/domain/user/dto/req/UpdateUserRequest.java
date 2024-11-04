@@ -9,4 +9,6 @@ import lombok.NoArgsConstructor;
 public class UpdateUserRequest {
     private final String nickname;
     private final String Intro;
+    private final String major;
+    private final String email;
 }

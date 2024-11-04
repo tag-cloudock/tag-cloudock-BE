@@ -10,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 public class Section {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long sectionId;
 
     @Column

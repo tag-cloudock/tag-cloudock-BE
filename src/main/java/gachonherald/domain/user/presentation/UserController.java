@@ -36,13 +36,13 @@ public class UserController {
     }
 
 
-    @GetMapping(value = "/email")
+    @PostMapping(value = "/email/signin")
     public ResponseDto<UserResponse> emailSignIn(@RequestBody EmailSignInRequest request) {
         UserResponse response = userService.emailLogin(request);
         return ResponseDto.of(OK.value(), SUCCESS_LOGIN.getMessage(), response);
     }
 
-    @PostMapping(value = "/email")
+    @PostMapping(value = "/email/signup")
     public ResponseDto<UserResponse> emailSignUp(@RequestBody EmailSignUpRequest request) {
         UserResponse response = userService.emailRegister(request);
         return ResponseDto.of(OK.value(), SUCCESS_REGISTER.getMessage(), response);
@@ -84,15 +84,9 @@ public class UserController {
         return ResponseDto.of(OK.value(), SUCCESS_UPDATE.getMessage(), response);
     }
 
-    @PatchMapping("/nickname")
-    public ResponseDto<UserResponse> updateNickname(@RequestBody UpdateUserRequest request, Authentication authentication) {
-        UserResponse response = userService.updateNickName(authentication.getName(), request);
-        return ResponseDto.of(OK.value(), SUCCESS_UPDATE.getMessage(), response);
-    }
-
-    @PatchMapping("/intro")
-    public ResponseDto<UserResponse> updateBio(@RequestBody UpdateUserRequest request, Authentication authentication) {
-        UserResponse response = userService.updateIntro(authentication.getName(), request);
+    @PatchMapping("/reporter/profile")
+    public ResponseDto<UserResponse> updateProfile(@RequestBody UpdateUserRequest request, Authentication authentication) {
+        UserResponse response = userService.updateProfile(authentication.getName(), request);
         return ResponseDto.of(OK.value(), SUCCESS_UPDATE.getMessage(), response);
     }
 

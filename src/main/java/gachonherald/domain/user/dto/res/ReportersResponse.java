@@ -11,8 +11,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 public class ReportersResponse {
-    private List<ReporterDTO> repoters;
-    public ReportersResponse(List<ReporterDTO> repoters) {
-        this.repoters = repoters;
+    private List<ReporterDTO> reporters;
+    public ReportersResponse(List<ReporterDTO> reporters) {
+        this.reporters = reporters;
     }
 }
