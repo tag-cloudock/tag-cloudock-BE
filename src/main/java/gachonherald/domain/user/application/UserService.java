@@ -260,6 +260,7 @@ public class UserService {
     public UserResponse updateProfile(String userId, UpdateUserRequest request) {
         User user = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
         user.setNickName(request.getNickname());
+        System.out.println(request.getIntro());
         user.setIntro(request.getIntro());
         user.setMajor(request.getMajor());
         user.setEmail(request.getEmail());

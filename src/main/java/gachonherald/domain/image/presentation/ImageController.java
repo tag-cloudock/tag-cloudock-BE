@@ -1,17 +1,20 @@
 package gachonherald.domain.image.presentation;
 
+import gachonherald.domain.article.presentation.constant.ResponseMessage;
 import gachonherald.domain.image.application.ImageService;
+import gachonherald.domain.image.dto.res.ImageResponse;
 import gachonherald.domain.image.exception.ImageNotFoundException;
+import gachonherald.global.config.dto.ResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,5 +39,15 @@ public class ImageController {
             throw new ImageNotFoundException();
         }
 
+    }
+
+    @PostMapping("/image")
+    public ResponseDto<ImageResponse> saveImage(@RequestPart MultipartFile pic) {
+        try {
+            String imageName = imageService.save(pic, false);
+            return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), new ImageResponse(imageName));
+        } catch (Exception e) {
+            throw new ImageNotFoundException();
+        }
     }
 }
