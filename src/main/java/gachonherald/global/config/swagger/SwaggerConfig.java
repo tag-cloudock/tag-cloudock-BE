@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 
 
 @OpenAPIDefinition(
-        info = @Info(title = "pagether API 명세서",
+        info = @Info(title = "the gachon herald API 명세서",
                 description = "",
                 version = "v1"))
 @RequiredArgsConstructor

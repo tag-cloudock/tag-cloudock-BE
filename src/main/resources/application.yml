@@ -6,9 +6,9 @@ spring:
       ddl-auto: update
     open-in-view: false
   datasource:
-    url: jdbc:mysql://localhost/gachonherald_db
-    username: root
-    password: password
+    url: jdbc:mysql://thegachonherald-db.c5wqqq4ue5cs.ap-northeast-2.rds.amazonaws.com:3306/gachonherald_db
+    username: admin
+    password: rkcjsgpfjfem2024
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:

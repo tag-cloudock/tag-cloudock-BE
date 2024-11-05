@@ -6,7 +6,7 @@ spring:
       ddl-auto: update
     open-in-view: false
   datasource:
-    url: jdbc:mysql://pagether-db.c3yy4ym66xc0.ap-northeast-2.rds.amazonaws.com:3306/pagether
+    url: jdbc:mysql://thegachonherald-db.c5wqqq4ue5cs.ap-northeast-2.rds.amazonaws.com:3306/gachonherald_db
     username: admin
     password: rkcjsgpfjfem2024
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -34,3 +34,11 @@ kakao:
   rest-api-key: ad5af90a611dfe785365686986b087e7
 aladin:
   ttb-key: ttbMrhappyjs1948005
+mail:
+  password: glel qzfb xmwo xyow
+
+server:
+  ssl:
+    key-store: /app/assets/ssl/keystore.p12
+    key-store-type: PKCS12
+    key-store-password: rkcjsgpfjfem2024
