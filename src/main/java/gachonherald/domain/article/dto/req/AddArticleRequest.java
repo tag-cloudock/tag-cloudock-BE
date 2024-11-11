@@ -12,6 +12,5 @@ public class AddArticleRequest {
     private String subtitle;
     private String content;
     private String mainImage;
-    private Long reporterId;
     private Long sectionId;
 }

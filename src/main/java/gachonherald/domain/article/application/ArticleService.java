@@ -52,6 +52,9 @@ public class ArticleService {
                 .section(section)
                 .status(ArticleStatus.EDITING)
                 .isEditorsPick(false)
+                .viewCount(0L)
+                .mainImage(request.getMainImage())
+                .publishedAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();

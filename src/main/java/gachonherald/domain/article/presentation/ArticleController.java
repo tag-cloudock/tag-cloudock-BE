@@ -34,7 +34,7 @@ public class ArticleController {
     private final ArticleService articleService;
 
     @PostMapping
-    public ResponseDto<ArticleResponse> save(@RequestPart AddArticleRequest request, Authentication authentication) {
+    public ResponseDto<ArticleResponse> save(@RequestBody AddArticleRequest request, Authentication authentication) {
         ArticleResponse response = articleService.save(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
     }
