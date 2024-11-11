@@ -15,6 +15,7 @@ import gachonherald.domain.section.domain.Section;
 import gachonherald.domain.section.domain.SectionStatus;
 import gachonherald.domain.section.exception.SectionNotFoundException;
 import gachonherald.domain.section.repository.SectionRepository;
+import gachonherald.domain.user.domain.Role;
 import gachonherald.domain.user.domain.User;
 import gachonherald.domain.user.exception.UserNotFountException;
 import gachonherald.domain.user.repository.UserRepository;
@@ -51,7 +52,7 @@ public class ArticleService {
                 .content(request.getContent())
                 .reporter(reporter)
                 .section(section)
-                .status(ArticleStatus.EDITING)
+                .status(request.getStatus() == null ? ArticleStatus.EDITING : ArticleStatus.valueOf(request.getStatus()))
                 .isEditorsPick(false)
                 .viewCount(0L)
                 .mainImage(request.getMainImage())
@@ -67,6 +68,7 @@ public class ArticleService {
         Article article = articleRepository.findById(request.getArticleId()).orElseThrow(ArticleNotFoundException::new);
         Section section = sectionRepository.findById(request.getSectionId()).orElseThrow(SectionNotFoundException::new);
         article.setTitle(request.getTitle());
+        article.setStatus(ArticleStatus.valueOf(request.getStatus()));
         article.setSubtitle(request.getSubtitle());
         article.setContent(request.getContent());
         article.setSection(section);
@@ -86,8 +88,8 @@ public class ArticleService {
 
     public ArticleResponse getFromReporter(Long articleId, String userId) {
         Article article = articleRepository.findById(articleId).orElseThrow(ArticleNotFoundException::new);
-
-        if (article.getReporter().getUserId().equals(userId)){
+        User reporter = userRepository.findByUserId(userId).orElseThrow(UserNotFountException::new);
+        if (article.getReporter().getUserId().equals(userId) || reporter.getRole().equals(Role.ADMIN)){
             return new ArticleResponse(article);
         }
         throw new UnauthorizedAccessException();

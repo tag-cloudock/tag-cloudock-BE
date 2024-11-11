@@ -1,6 +1,7 @@
 package gachonherald.domain.article.dto.res;
 
 import gachonherald.domain.article.domain.Article;
+import gachonherald.domain.article.domain.ArticleStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 public class ArticleResponse {
     private Long articleId;
+    private ArticleStatus status;
     private String title;
     private String subtitle;
     private String content;
@@ -25,6 +27,7 @@ public class ArticleResponse {
     @Builder
     public ArticleResponse(Article article) {
         articleId = article.getArticleId();
+        status = article.getStatus();
         title = article.getTitle();
         subtitle = article.getSubtitle();
         content = article.getContent();
