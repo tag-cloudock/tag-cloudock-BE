@@ -2,6 +2,7 @@ package gachonherald.domain.article.presentation;
 
 import gachonherald.domain.article.application.ArticleService;
 import gachonherald.domain.article.dto.req.AddArticleRequest;
+import gachonherald.domain.article.dto.req.UpdateArticleRequest;
 import gachonherald.domain.article.dto.res.ArticleResponse;
 import gachonherald.domain.article.dto.res.ArticlesResponse;
 import gachonherald.domain.article.dto.res.HomeArticlesResponse;
@@ -17,6 +18,7 @@ import gachonherald.domain.user.dto.res.UserResponse;
 import gachonherald.global.config.dto.ResponseDto;
 import gachonherald.global.config.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.sql.Update;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,6 +39,12 @@ public class ArticleController {
     public ResponseDto<ArticleResponse> save(@RequestBody AddArticleRequest request, Authentication authentication) {
         ArticleResponse response = articleService.save(request, authentication.getName());
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_CREATE.getMessage(), response);
+    }
+
+    @PatchMapping
+    public ResponseDto<ArticleResponse> update(@RequestBody UpdateArticleRequest request) {
+        ArticleResponse response = articleService.update(request);
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_UPDATE.getMessage(), response);
     }
 
     @GetMapping("/{id}")

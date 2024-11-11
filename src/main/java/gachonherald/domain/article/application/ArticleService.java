@@ -5,6 +5,7 @@ import gachonherald.domain.article.domain.ArticleStatus;
 import gachonherald.domain.article.dto.ArticleDTO;
 import gachonherald.domain.article.dto.SectionDTO;
 import gachonherald.domain.article.dto.req.AddArticleRequest;
+import gachonherald.domain.article.dto.req.UpdateArticleRequest;
 import gachonherald.domain.article.dto.res.ArticleResponse;
 import gachonherald.domain.article.dto.res.ArticlesResponse;
 import gachonherald.domain.article.dto.res.HomeArticlesResponse;
@@ -58,6 +59,18 @@ public class ArticleService {
                 .updatedAt(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();
+        article = articleRepository.save(article);
+        return new ArticleResponse(article);
+    }
+
+    public ArticleResponse update(UpdateArticleRequest request) {
+        Article article = articleRepository.findById(request.getArticleId()).orElseThrow(ArticleNotFoundException::new);
+        Section section = sectionRepository.findById(request.getSectionId()).orElseThrow(SectionNotFoundException::new);
+        article.setTitle(request.getTitle());
+        article.setSubtitle(request.getSubtitle());
+        article.setContent(request.getContent());
+        article.setSection(section);
+        article.setUpdatedAt(LocalDateTime.now());
         article = articleRepository.save(article);
         return new ArticleResponse(article);
     }
