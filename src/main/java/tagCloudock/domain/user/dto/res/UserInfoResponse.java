@@ -14,23 +14,4 @@ public class UserInfoResponse {
 
     private Long id;
     private String userId;
-    private String nickname;
-    private String imgPath;
-    private String intro;
-
-    public UserInfoResponse(User user,Boolean isFollowed, Boolean isFollowing, Boolean isBlocked, Boolean isBlocking) {
-        this.id = user.getId();
-        this.userId = user.getUserId();
-        this.nickname = user.getNickName();
-        this.imgPath = user.getImgPath();
-        this.intro = user.getIntro();
-    }
-
-    public UserInfoResponse(User user) {
-        this.id = user.getId();
-        this.userId = user.getUserId();
-        this.nickname = user.getNickName();
-        this.imgPath = user.getImgPath();
-        this.intro = user.getIntro();
-    }
 }

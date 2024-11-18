@@ -66,6 +66,10 @@ dependencies {
     //mail
     implementation 'javax.mail:mail:1.4.7'
     implementation 'org.springframework:spring-context-support:5.3.9'
+
+    implementation files('lib/open-korean-text-2.1.0.jar')
+    implementation 'org.scala-lang:scala-library:2.12.4'
+    implementation 'com.twitter.penguin:korean-text:4.4.4'
 }
 
 tasks.named('test') {

@@ -10,15 +10,9 @@ import java.util.List;
 @Getter
 @Setter
 public class TagsResponse {
-    private List<TagDTO> articles;
-    private int pageCount;
+    private List<TagDTO> tags;
     @Builder
-    public TagsResponse(List<TagDTO> articles, int pageCount) {
-        this.articles = articles;
-        this.pageCount = pageCount;
-    }
-    @Builder
-    public TagsResponse(List<TagDTO> articles) {
-        this.articles = articles;
+    public TagsResponse(List<TagDTO> tags) {
+        this.tags = tags;
     }
 }

@@ -6,16 +6,12 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Getter
-@Builder
 public class TagDTO {
-    private Long tagId;
-    private String name;
-    private Long amount;
+    private String text;
+    private int value;
 
-
-    public TagDTO(Long tagId, String name, Long amount) {
-        this.tagId = tagId;
-        this.name = name;
-        this.amount = amount;
+    public TagDTO(String text, int value) {
+        this.text = text;
+        this.value = value;
     }
 }

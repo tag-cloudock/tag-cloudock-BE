@@ -7,6 +7,8 @@ import tagCloudock.global.config.dto.ResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 import static org.springframework.http.HttpStatus.OK;
 
 @RestController
@@ -15,9 +17,11 @@ import static org.springframework.http.HttpStatus.OK;
 public class NewsController {
     private final NewsService newsService;
 
-    @GetMapping("/{tag}")
-    public ResponseDto<NewsResponse> getList(@PathVariable String tag, @RequestParam int pageNumber) {
-        NewsResponse response = newsService.getList(tag, pageNumber);
+    @GetMapping("search/{tag}")
+    public ResponseDto<NewsResponse> get(@PathVariable String tag) throws IOException {
+        NewsResponse response = newsService.getNews(tag, 1, 10);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
+
+
 }

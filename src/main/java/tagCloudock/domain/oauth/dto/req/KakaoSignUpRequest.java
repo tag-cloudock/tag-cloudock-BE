@@ -1,20 +1,14 @@
 package tagCloudock.domain.oauth.dto.req;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
 
 @Getter
 @Setter
+@Jacksonized
+@Builder
 public class KakaoSignUpRequest {
     private String code;
-    private String name;
-    private String nickname;
-    private String userId;
-    private String email;
-    private String address;
-    private String detailAddress;
-    private String phone;
-    private String intro;
-    private String password;
-
 }

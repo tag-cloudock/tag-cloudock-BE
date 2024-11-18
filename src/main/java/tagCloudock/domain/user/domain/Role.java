@@ -6,9 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Role {
-    ADMIN("ROLE_ADMIN"),
-    REPORTER("ROLE_REPORTER"),
-    READER("ROLE_READER");
+    USER("ROLE_USER");
 
     private final String role;
 

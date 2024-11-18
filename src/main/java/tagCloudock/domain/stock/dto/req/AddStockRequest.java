@@ -8,6 +8,5 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 @Builder
 public class AddStockRequest {
-    private Long stockId;
-    private String name;
+    private String stockCode;
 }

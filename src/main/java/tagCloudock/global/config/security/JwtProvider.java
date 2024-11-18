@@ -65,7 +65,7 @@ public class JwtProvider {
     public TokensResponse refreshTokens(String refreshToken) {
         validateToken(refreshToken);
         String userId = getEmail(refreshToken);
-        String newAccessToken = createAccessToken(userId, Role.READER);
+        String newAccessToken = createAccessToken(userId, Role.USER);
         String newRefreshToken = createRefreshToken(userId);
         return new TokensResponse(newAccessToken, newRefreshToken);
     }

@@ -1,22 +1,16 @@
 package tagCloudock.domain.news.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor
 @Getter
-@Builder
+@Setter
 public class NewsDTO {
-    private Long newsId;
-    private String url;
     private String title;
-
-
-    public NewsDTO(Long newsId, String url, String title) {
-        this.newsId = newsId;
-        this.url = url;
-        this.title = title;
-    }
+    private String originallink;
+    private String link;
+    private String description;
+    private String pubDate;
 }

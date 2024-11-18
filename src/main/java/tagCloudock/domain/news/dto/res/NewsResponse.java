@@ -1,6 +1,5 @@
 package tagCloudock.domain.news.dto.res;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,12 +12,9 @@ import java.util.List;
 @Getter
 @Setter
 public class NewsResponse {
-    private List<NewsDTO> news;
-    private int pageCount;
-
-    @Builder
-    public NewsResponse(List<NewsDTO> news, int pageCount) {
-        this.news = news;
-        this.pageCount = pageCount;
-    }
+    private String lastBuildDate;
+    private int total;
+    private int start;
+    private int display;
+    private List<NewsDTO> items;
 }
