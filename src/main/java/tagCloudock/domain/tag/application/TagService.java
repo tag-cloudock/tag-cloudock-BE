@@ -50,7 +50,7 @@ public class TagService {
 
         List<TagDTO> dtos = new ArrayList<>();
         int id = 1;
-        int limit = Math.min(sortedWordList.size(), 25);
+        int limit = Math.min(sortedWordList.size(), 40);
 
         for (int i = 0; i < limit; i++) {
             Map.Entry<String, Integer> tag = sortedWordList.get(i);

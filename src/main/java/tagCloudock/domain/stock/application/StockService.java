@@ -4,6 +4,8 @@ import tagCloudock.domain.stock.domain.Stock;
 import tagCloudock.domain.stock.dto.StockDTO;
 import tagCloudock.domain.stock.dto.req.AddStockRequest;
 import tagCloudock.domain.stock.dto.res.StocksResponse;
+import tagCloudock.domain.stock.exception.StockAlreadyExistException;
+import tagCloudock.domain.stock.exception.StockNotFoundException;
 import tagCloudock.domain.stock.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,9 @@ public class StockService {
     public void save(AddStockRequest request, String userId) {
         StockInfo stockInfo = stockInfoRepository.findById(request.getStockCode()).orElseThrow(StockInfoNotFoundException::new);
         User user = userRepository.findByUserId(userId).orElseThrow(StockInfoNotFoundException::new);
+        if (stockRepository.existsByUserAndStockInfo(user, stockInfo)){
+            throw new StockAlreadyExistException();
+        }
         Stock stock = Stock.builder()
                 .stockInfo(stockInfo)
                 .user(user)
@@ -47,8 +52,25 @@ public class StockService {
         List<StockInfo> resultByCode = stockInfoRepository.findByStockCodeContaining(keyword);
         List<StockInfo> resultByName = stockInfoRepository.findByNameContaining(keyword);
 
-        for(StockInfo stock : resultByCode) response.add(new StockDTO(stock));
-        for(StockInfo stock : resultByName) response.add(new StockDTO(stock));
-        return new StocksResponse(response);
+        // 결과를 response 리스트에 추가
+        for (StockInfo stock : resultByCode) {
+            response.add(new StockDTO(stock));
+        }
+        for (StockInfo stock : resultByName) {
+            response.add(new StockDTO(stock));
+        }
+
+        // 앞 5개의 결과만 잘라서 반환
+        int size = response.size();
+        List<StockDTO> firstFiveResults = response.subList(0, Math.min(5, size)); // 리스트의 크기가 5보다 작을 수 있음
+
+        return new StocksResponse(firstFiveResults);
+    }
+
+    public void delete(String stockCode, String userId) {
+        StockInfo stockInfo = stockInfoRepository.findById(stockCode).orElseThrow(StockInfoNotFoundException::new);
+        User user = userRepository.findByUserId(userId).orElseThrow(StockInfoNotFoundException::new);
+        Stock stock = stockRepository.findByUserAndStockInfo(user, stockInfo);
+        stockRepository.delete(stock);
     }
 }

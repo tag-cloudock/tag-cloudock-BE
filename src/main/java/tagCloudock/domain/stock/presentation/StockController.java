@@ -32,4 +32,10 @@ public class StockController {
         StocksResponse response = stockService.search(keyword);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
+
+    @DeleteMapping("/{stockCode}")
+    public ResponseDto delete(@PathVariable String stockCode, Authentication authentication) {
+        stockService.delete(stockCode, authentication.getName());
+        return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_DELETE.getMessage());
+    }
 }

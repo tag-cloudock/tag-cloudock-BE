@@ -19,7 +19,7 @@ public class NewsController {
 
     @GetMapping("search/{tag}")
     public ResponseDto<NewsResponse> get(@PathVariable String tag) throws IOException {
-        NewsResponse response = newsService.getNews(tag, 1, 10);
+        NewsResponse response = newsService.getNews(tag, 1, 7);
         return ResponseDto.of(OK.value(), ResponseMessage.SUCCESS_READ.getMessage(), response);
     }
 
